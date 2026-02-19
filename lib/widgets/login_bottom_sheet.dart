@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class LoginBottomSheet extends StatelessWidget {
+class LoginBottomSheet extends StatefulWidget {
   const LoginBottomSheet({super.key});
 
   static void show(BuildContext context) {
@@ -14,6 +14,13 @@ class LoginBottomSheet extends StatelessWidget {
       builder: (_) => const LoginBottomSheet(),
     );
   }
+
+  @override
+  State<LoginBottomSheet> createState() => _LoginBottomSheetState();
+}
+
+class _LoginBottomSheetState extends State<LoginBottomSheet> {
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +54,13 @@ class LoginBottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+
           const Text(
             "Let's work",
             style: TextStyle(fontSize: 16, color: Color(0xFF1A1A1A)),
           ),
           const SizedBox(height: 24),
+
           // Email field
           TextField(
             decoration: InputDecoration(
@@ -70,9 +79,11 @@ class LoginBottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Password field
           // Password field
           TextField(
-            obscureText: true,
+            obscureText: _obscurePassword,
             decoration: InputDecoration(
               hintText: 'Enter Password',
               hintStyle: const TextStyle(color: Color(0xFFAEAEAE)),
@@ -86,9 +97,18 @@ class LoginBottomSheet extends StatelessWidget {
                 horizontal: 16,
                 vertical: 16,
               ),
-              suffixIcon: const Icon(
-                Icons.visibility_off,
-                color: Color(0xFF888888),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: const Color(0xFF888888),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
               ),
             ),
           ),
