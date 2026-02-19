@@ -42,10 +42,8 @@ class WelcomeScreen extends StatelessWidget {
               // Logo placeholder
               const Expanded(
                 child: Center(
-                  child: Icon(
-                    Icons.task_alt,
-                    size: 200,
-                    color: Color(0xFF6750A4),
+                  child: Image(
+                    image: AssetImage('assets/images/unitask_logo.png'),
                   ),
                 ),
               ),
