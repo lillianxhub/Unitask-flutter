@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class RegisterBottomSheet extends StatelessWidget {
+class RegisterBottomSheet extends StatefulWidget {
   const RegisterBottomSheet({super.key});
 
   static void show(BuildContext context) {
@@ -14,6 +14,14 @@ class RegisterBottomSheet extends StatelessWidget {
       builder: (_) => const RegisterBottomSheet(),
     );
   }
+
+  @override
+  State<RegisterBottomSheet> createState() => _RegisterBottomSheetState();
+}
+
+class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -51,18 +59,43 @@ class RegisterBottomSheet extends StatelessWidget {
             style: TextStyle(fontSize: 16, color: Color(0xFF1A1A1A)),
           ),
           const SizedBox(height: 24),
+
           // Name
           _buildField('Enter Name'),
           const SizedBox(height: 16),
+
           // Email
           _buildField('Enter Email', inputType: TextInputType.emailAddress),
           const SizedBox(height: 16),
+
           // Password
-          _buildField('Enter Password', obscure: true),
+          _buildField(
+            'Enter Password',
+            obscure: _obscurePassword,
+            isPasswordField: true,
+            inputType: TextInputType.visiblePassword,
+            onToggleVisibility: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+          ),
           const SizedBox(height: 16),
+
           // Confirm Password
-          _buildField('Confirm Password', obscure: true),
+          _buildField(
+            'Confirm Password',
+            obscure: _obscureConfirmPassword,
+            isPasswordField: true,
+            inputType: TextInputType.visiblePassword,
+            onToggleVisibility: () {
+              setState(() {
+                _obscureConfirmPassword = !_obscureConfirmPassword;
+              });
+            },
+          ),
           const SizedBox(height: 32),
+
           // Register button
           SizedBox(
             width: double.infinity,
@@ -110,6 +143,8 @@ class RegisterBottomSheet extends StatelessWidget {
   Widget _buildField(
     String hint, {
     bool obscure = false,
+    bool isPasswordField = false,
+    VoidCallback? onToggleVisibility,
     TextInputType? inputType,
   }) {
     return TextField(
@@ -128,8 +163,16 @@ class RegisterBottomSheet extends StatelessWidget {
           horizontal: 16,
           vertical: 16,
         ),
-        suffixIcon: obscure
-            ? const Icon(Icons.visibility_off, color: Color(0xFF888888))
+        suffixIcon: isPasswordField
+            ? IconButton(
+                icon: Icon(
+                  obscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: const Color(0xFF999999),
+                ),
+                onPressed: onToggleVisibility,
+              )
             : null,
       ),
     );
