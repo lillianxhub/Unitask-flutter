@@ -1,0 +1,271 @@
+import 'package:flutter/material.dart';
+import '../models/project.dart';
+import '../models/project_manager.dart';
+
+class MyProjectsScreen extends StatefulWidget {
+  const MyProjectsScreen({super.key});
+
+  @override
+  State<MyProjectsScreen> createState() => _MyProjectsScreenState();
+}
+
+class _MyProjectsScreenState extends State<MyProjectsScreen> {
+  int _selectedFilter = 0;
+  final List<String> _filters = ['All', 'Doing', 'Complete', 'Out of Date'];
+
+  @override
+  Widget build(BuildContext context) {
+    final projects = ProjectManager.instance.getAllProjects();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            const Padding(
+              padding: EdgeInsets.only(left: 24, top: 24),
+              child: Text(
+                'My Project',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Filter chips
+            SizedBox(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                itemCount: _filters.length,
+                separatorBuilder: (_, index2) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final isSelected = _selectedFilter == index;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedFilter = index),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFF6750A4)
+                            : const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _filters[index],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF4F4F4F),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            // Project list
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(top: 10, bottom: 100),
+                child: Column(
+                  children: projects.map((p) => _buildProjectCard(p)).toList(),
+                ),
+              ),
+            ),
+            // Bottom nav
+            _buildBottomNav(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProjectCard(Project project) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/my-project-detail',
+          arguments: {'name': project.name},
+        );
+      },
+      child: Card(
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      project.name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 20,
+                    color: Colors.black,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                project.description,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  project.status,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: Color(0xFF888888),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Due Date : ${project.dueDate}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF888888),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 16,
+                        color: Color(0xFF888888),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        '5',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF888888),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(
+                        Icons.attach_file,
+                        size: 16,
+                        color: Color(0xFF888888),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        '1',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF888888),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      height: 70,
+      color: const Color(0xFFEBE4F5),
+      child: Row(
+        children: [
+          _navItem(
+            Icons.dashboard,
+            'Home',
+            false,
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+          ),
+          _navItem(Icons.edit_note, 'Project', true),
+          _navItem(Icons.bar_chart, 'Stats', false),
+          _navItem(Icons.person_outline, 'Profile', false),
+        ],
+      ),
+    );
+  }
+
+  Widget _navItem(
+    IconData icon,
+    String label,
+    bool isActive, {
+    VoidCallback? onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 28,
+              color: isActive ? Colors.black : const Color(0xFF828282),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isActive ? Colors.black : const Color(0xFF828282),
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
