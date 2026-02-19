@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/add_task_bottom_sheet.dart';
+import '../widgets/bottom_nav.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   const ProjectDetailScreen({super.key});
@@ -242,17 +243,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
             ),
             // Bottom nav
-            Container(
-              height: 60,
-              color: const Color(0xFFEBE4F5),
-              child: Row(
-                children: [
-                  _navItem(Icons.dashboard, 'Home'),
-                  _navItem(Icons.edit_note, 'Project'),
-                  _navItem(Icons.bar_chart, 'Stats'),
-                  _navItem(Icons.person_outline, 'Profile'),
-                ],
-              ),
+            BottomNav(
+              currentIndex: 1, // Stay on "Project" tab
+              onTap: (index) {
+                if (index == 0) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/home',
+                    (route) => false,
+                  );
+                } else if (index == 1) {
+                  // Already on projects/details, just go back to the list if desired
+                  // or stay here. User usually expects project context.
+                  Navigator.popUntil(context, ModalRoute.withName('/home'));
+                }
+                // Handle stats/profile as needed
+              },
             ),
           ],
         ),
@@ -529,21 +535,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 style: TextStyle(fontSize: 12, color: Color(0xFFCFBDF6)),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _navItem(IconData icon, String label) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 24, color: const Color(0xFF828282)),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 10, color: Color(0xFF828282)),
-          ),
         ],
       ),
     );

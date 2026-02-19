@@ -78,14 +78,12 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
             // Project list
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 10, bottom: 100),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Column(
                   children: projects.map((p) => _buildProjectCard(p)).toList(),
                 ),
               ),
             ),
-            // Bottom nav
-            _buildBottomNav(),
           ],
         ),
       ),
@@ -211,59 +209,6 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      height: 70,
-      color: const Color(0xFFEBE4F5),
-      child: Row(
-        children: [
-          _navItem(
-            Icons.dashboard,
-            'Home',
-            false,
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/home');
-            },
-          ),
-          _navItem(Icons.edit_note, 'Project', true),
-          _navItem(Icons.bar_chart, 'Stats', false),
-          _navItem(Icons.person_outline, 'Profile', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _navItem(
-    IconData icon,
-    String label,
-    bool isActive, {
-    VoidCallback? onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 28,
-              color: isActive ? Colors.black : const Color(0xFF828282),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: isActive ? Colors.black : const Color(0xFF828282),
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
         ),
       ),
     );

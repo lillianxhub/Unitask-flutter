@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
-import 'screens/home_screen.dart';
 import 'screens/my_projects_screen.dart';
 import 'screens/my_project_detail_screen.dart';
 import 'screens/project_detail_screen.dart';
 import 'screens/members_screen.dart';
+import 'screens/main_layout.dart';
 
 void main() {
   runApp(const UniTaskApp());
@@ -29,7 +29,7 @@ class UniTaskApp extends StatelessWidget {
         '/': (_) => const SplashScreen(),
         '/splash': (_) => const SplashScreen(),
         '/welcome': (_) => const WelcomeScreen(),
-        '/home': (_) => const HomeScreen(),
+        '/home': (_) => const MainLayout(),
         '/my-projects': (_) => const MyProjectsScreen(),
         '/my-project-detail': (_) => const MyProjectDetailScreen(),
         '/project-detail': (_) => const ProjectDetailScreen(),
