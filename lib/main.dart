@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'models/project_manager.dart';
+import 'models/user_manager.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/my_projects_screen.dart';
 import 'screens/my_project_detail_screen.dart';
 import 'screens/project_detail_screen.dart';
 import 'screens/members_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/main_layout.dart';
 
 void main() {
-  runApp(const UniTaskApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProjectManager.instance),
+        ChangeNotifierProvider(create: (_) => UserManager.instance),
+      ],
+      child: const UniTaskApp(),
+    ),
+  );
 }
 
 class UniTaskApp extends StatelessWidget {
@@ -34,6 +46,7 @@ class UniTaskApp extends StatelessWidget {
         '/my-project-detail': (_) => const MyProjectDetailScreen(),
         '/project-detail': (_) => const ProjectDetailScreen(),
         '/members': (_) => const MembersScreen(),
+        '/profile': (_) => const ProfileScreen(),
       },
     );
   }

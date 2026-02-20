@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/project_manager.dart';
+import '../models/task.dart';
 import '../widgets/add_task_bottom_sheet.dart';
 import '../widgets/bottom_nav.dart';
+import '../widgets/task_detail_bottom_sheet.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   const ProjectDetailScreen({super.key});
@@ -11,7 +15,6 @@ class ProjectDetailScreen extends StatefulWidget {
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   bool _isTaskTab = true;
-  final List<Map<String, String>> _addedTasks = [];
   bool _isDefaultProject = true;
 
   @override
@@ -31,15 +34,34 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     String dueDate,
     String priority,
   ) {
-    setState(() {
-      _addedTasks.insert(0, {
-        'name': name,
-        'description': description,
-        'assignedTo': assignedTo,
-        'dueDate': dueDate,
-        'priority': priority,
-      });
-    });
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final projectName = args?['name'] as String? ?? 'Mobile Project';
+
+    DateTime parsedDueDate = DateTime.now();
+    if (dueDate.isNotEmpty) {
+      try {
+        final parts = dueDate.split('/');
+        if (parts.length == 3) {
+          parsedDueDate = DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[1]),
+            int.parse(parts[0]),
+          );
+        }
+      } catch (e) {
+        // use default
+      }
+    }
+
+    final newTask = Task(
+      title: name,
+      description: description,
+      dueDate: parsedDueDate,
+      createdDate: DateTime.now(),
+    );
+
+    context.read<ProjectManager>().addTask(projectName, newTask);
   }
 
   @override
@@ -100,7 +122,33 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   ),
                                 ),
                               ),
-                              const Icon(Icons.more_vert, color: Colors.black),
+                              PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  if (value == 'Delete') {
+                                    context
+                                        .read<ProjectManager>()
+                                        .deleteProject(projectName);
+                                    Navigator.pop(context);
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  return {'Delete'}.map((String choice) {
+                                    return PopupMenuItem<String>(
+                                      value: choice,
+                                      child: Text(
+                                        choice,
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList();
+                                },
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.black,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -246,105 +294,120 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             BottomNav(
               currentIndex: 1, // Stay on "Project" tab
               onTap: (index) {
-                if (index == 0) {
+                if (index != 1) {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     '/home',
                     (route) => false,
+                    arguments: {'tabIndex': index},
                   );
-                } else if (index == 1) {
-                  // Already on projects/details, just go back to the list if desired
-                  // or stay here. User usually expects project context.
+                } else {
                   Navigator.popUntil(context, ModalRoute.withName('/home'));
                 }
-                // Handle stats/profile as needed
               },
             ),
           ],
         ),
       ),
-      floatingActionButton: Container(
-        width: 65,
-        height: 65,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
-          ),
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFCFBDF6).withValues(alpha: 0.5),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 50),
+        child: Container(
+          width: 65,
+          height: 65,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
             ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () {
-            AddTaskBottomSheet.show(context, onSave: _onTaskAdded);
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, color: Colors.white, size: 30),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFCFBDF6).withValues(alpha: 0.5),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: () {
+              AddTaskBottomSheet.show(context, onSave: _onTaskAdded);
+            },
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: const Icon(Icons.add, color: Colors.white, size: 30),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildTasksContent() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final projectName = args?['name'] as String? ?? 'Mobile Project';
+
+    return Consumer<ProjectManager>(
+      builder: (context, manager, child) {
+        final project = manager.projects.firstWhere(
+          (p) => p.name == projectName,
+          orElse: () => manager.projects.first,
+        );
+        final tasks = project.tasks;
+
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Tasks',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Tasks',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const Icon(Icons.sort, color: Colors.black),
+                ],
               ),
-              const Icon(Icons.sort, color: Colors.black),
+              const SizedBox(height: 16),
+
+              if (tasks.isEmpty) ...[
+                const SizedBox(height: 40),
+                const Center(
+                  child: Text(
+                    'No tasks yet',
+                    style: TextStyle(color: Color(0xFF828282)),
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ] else ...[
+                ...tasks.map(
+                  (task) => GestureDetector(
+                    onTap: () {
+                      TaskDetailBottomSheet.show(context, task, () {
+                        context.read<ProjectManager>().deleteTask(
+                          projectName,
+                          task,
+                        );
+                      });
+                    },
+                    child: _buildTaskCard(
+                      task.title,
+                      task.description.isEmpty
+                          ? 'No description'
+                          : task.description,
+                      task.isCompleted ? 'Complete' : 'Doing',
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 16),
-          // Added tasks
-          ..._addedTasks.map(
-            (task) => _buildTaskCard(
-              task['name'] ?? '',
-              task['description'] ?? 'Description',
-              'Doing',
-            ),
-          ),
-          // Default tasks or empty state
-          if (_isDefaultProject) ...[
-            _buildTaskCard(
-              'Mobile UI Design',
-              'Figma design for mobile app',
-              'Doing',
-            ),
-            _buildTaskCard('Dashboard API', 'REST API endpoints', 'Review'),
-            _buildTaskCard(
-              'Database Schema',
-              'MongoDB schema design',
-              'Complete',
-            ),
-          ] else if (_addedTasks.isEmpty) ...[
-            const SizedBox(height: 40),
-            const Center(
-              child: Text(
-                'No tasks yet',
-                style: TextStyle(color: Color(0xFF828282)),
-              ),
-            ),
-            const SizedBox(height: 40),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 

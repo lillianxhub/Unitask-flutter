@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/user_manager.dart';
 
 class LoginBottomSheet extends StatefulWidget {
   const LoginBottomSheet({super.key});
@@ -21,6 +23,13 @@ class LoginBottomSheet extends StatefulWidget {
 
 class _LoginBottomSheetState extends State<LoginBottomSheet> {
   bool _obscurePassword = true;
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,55 +71,19 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
           const SizedBox(height: 24),
 
           // Email field
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Enter Email',
-              hintStyle: const TextStyle(color: Color(0xFFAEAEAE)),
-              filled: true,
-              fillColor: const Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-            ),
-          ),
+          _buildField('Enter Email', controller: _emailController),
           const SizedBox(height: 16),
 
           // Password field
-          // Password field
-          TextField(
-            obscureText: _obscurePassword,
-            decoration: InputDecoration(
-              hintText: 'Enter Password',
-              hintStyle: const TextStyle(color: Color(0xFFAEAEAE)),
-              filled: true,
-              fillColor: const Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: const Color(0xFF888888),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              ),
-            ),
+          _buildField(
+            'Enter Password',
+            obscure: _obscurePassword,
+            isPasswordField: true,
+            onToggleVisibility: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
           ),
           const SizedBox(height: 32),
           // Login button
@@ -126,13 +99,17 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/splash',
-                    (route) => false,
-                    arguments: 'HOME',
-                  );
+                  // Get values
+                  final email = _emailController.text;
+                  if (email.isNotEmpty) {
+                    context.read<UserManager>().login(email, 'password');
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/splash',
+                      (route) => false,
+                      arguments: 'HOME',
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -143,18 +120,75 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                 ),
                 child: const Text(
                   'Log In',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 16),
+          // Guest Login Button
+          TextButton(
+            onPressed: () {
+              context.read<UserManager>().loginAsGuest();
+              Navigator.of(context).pop();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/splash',
+                (route) => false,
+                arguments: 'HOME',
+              );
+            },
+            child: const Text(
+              'Login with Guest',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFCFBDF6),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-}
+
+  Widget _buildField(
+    String hint, {
+    bool obscure = false,
+    bool isPasswordField = false,
+    VoidCallback? onToggleVisibility,
+    TextInputType? inputType,
+    TextEditingController? controller,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: inputType,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Color(0xFFAEAEAE)),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        // Suffix icon for password
+        suffixIcon: isPasswordField
+            ? IconButton(
+                icon: Icon(
+                  obscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: const Color(0xFF888888),
+                ),
+                onPressed: onToggleVisibility,
+              )
+            : null,
+      ),
+    );
+  }
+} // End of State class

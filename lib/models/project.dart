@@ -1,10 +1,12 @@
+import 'task.dart';
+
 class Project {
   final String name;
   final String description;
   final String dueDate;
   final String? memberEmail;
   final String status;
-  final int progress;
+  final List<Task> tasks;
 
   Project({
     required this.name,
@@ -12,6 +14,12 @@ class Project {
     required this.dueDate,
     this.memberEmail,
     this.status = 'Doing',
-    this.progress = 0,
-  });
+    List<Task>? tasks,
+  }) : tasks = tasks ?? [];
+
+  int get progress {
+    if (tasks.isEmpty) return 0;
+    int completedCount = tasks.where((t) => t.isCompleted).length;
+    return ((completedCount / tasks.length) * 100).round();
+  }
 }

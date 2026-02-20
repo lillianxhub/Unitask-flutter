@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/project_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,18 +17,24 @@ class _SplashScreenState extends State<SplashScreen> {
 
   bool _started = false;
 
-  void _startLoading() {
+  Future<void> _startLoading() async {
     if (_started) return;
     _started = true;
     final nextScreen = ModalRoute.of(context)?.settings.arguments as String?;
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (!mounted) return;
-      if (nextScreen == 'HOME') {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        Navigator.pushReplacementNamed(context, '/welcome');
-      }
-    });
+
+    try {
+      // Automatically waits for the exact time it takes to fetch data
+      await ProjectManager.instance.initialize();
+    } catch (e) {
+      debugPrint('Error loading initial data: $e');
+    }
+
+    if (!mounted) return;
+    if (nextScreen == 'HOME') {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      Navigator.pushReplacementNamed(context, '/welcome');
+    }
   }
 
   @override

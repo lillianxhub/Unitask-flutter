@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/project.dart';
 import '../models/project_manager.dart';
 
@@ -15,8 +16,6 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final projects = ProjectManager.instance.getAllProjects();
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -79,8 +78,34 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Column(
-                  children: projects.map((p) => _buildProjectCard(p)).toList(),
+                child: Consumer<ProjectManager>(
+                  builder: (context, manager, child) {
+                    // Apply simple filtering if needed based on _selectedFilter
+                    var projects = manager.projects;
+                    if (_selectedFilter == 1) {
+                      // Doing
+                      projects = projects
+                          .where((p) => p.status == 'Doing')
+                          .toList();
+                    } else if (_selectedFilter == 2) {
+                      // Complete
+                      projects = projects
+                          .where((p) => p.status == 'Complete')
+                          .toList();
+                    } else if (_selectedFilter == 3) {
+                      // Out of Date
+                      projects = projects.where((p) {
+                        // Very basic check, you might want more robust date parsing
+                        return false; // Assuming date parsing logic is not fully implemented for Out of Date yet
+                      }).toList();
+                    }
+
+                    return Column(
+                      children: projects
+                          .map((p) => _buildProjectCard(p))
+                          .toList(),
+                    );
+                  },
                 ),
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/bottom_nav.dart';
 
 class MyProjectDetailScreen extends StatelessWidget {
   const MyProjectDetailScreen({super.key});
@@ -228,6 +229,22 @@ class MyProjectDetailScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            // Bottom nav
+            BottomNav(
+              currentIndex: 1, // Stay on "Project" tab
+              onTap: (index) {
+                if (index != 1) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/home',
+                    (route) => false,
+                    arguments: {'tabIndex': index},
+                  );
+                } else {
+                  Navigator.popUntil(context, ModalRoute.withName('/home'));
+                }
+              },
             ),
           ],
         ),
