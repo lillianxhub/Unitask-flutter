@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/user_manager.dart';
 
 class RegisterBottomSheet extends StatefulWidget {
   const RegisterBottomSheet({super.key});
@@ -22,6 +24,15 @@ class RegisterBottomSheet extends StatefulWidget {
 class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +72,15 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
           const SizedBox(height: 24),
 
           // Name
-          _buildField('Enter Name'),
+          _buildField('Enter Name', controller: _nameController),
           const SizedBox(height: 16),
 
           // Email
-          _buildField('Enter Email', inputType: TextInputType.emailAddress),
+          _buildField(
+            'Enter Email',
+            inputType: TextInputType.emailAddress,
+            controller: _emailController,
+          ),
           const SizedBox(height: 16),
 
           // Password
@@ -109,13 +124,24 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/splash',
-                    (route) => false,
-                    arguments: 'HOME',
-                  );
+                  // Get values from controllers
+                  final name = _nameController.text;
+                  final email = _emailController.text;
+                  // Simple validation
+                  if (name.isNotEmpty && email.isNotEmpty) {
+                    context.read<UserManager>().register(
+                      name,
+                      email,
+                      'password',
+                    ); // Dummy password
+                    Navigator.pop(context);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/splash',
+                      (route) => false,
+                      arguments: 'HOME',
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -146,8 +172,10 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
     bool isPasswordField = false,
     VoidCallback? onToggleVisibility,
     TextInputType? inputType,
+    TextEditingController? controller,
   }) {
     return TextField(
+      controller: controller,
       obscureText: obscure,
       keyboardType: inputType,
       decoration: InputDecoration(

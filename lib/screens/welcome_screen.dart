@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/login_bottom_sheet.dart';
 import '../widgets/register_bottom_sheet.dart';
+import 'package:provider/provider.dart';
+import '../models/user_manager.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -51,21 +53,20 @@ class WelcomeScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 height: 55,
-                child: OutlinedButton(
+                child: ElevatedButton(
                   onPressed: () => RegisterBottomSheet.show(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.black, width: 1.5),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 5,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
+                    padding: EdgeInsets.zero,
                   ),
                   child: const Text(
                     'Create Account',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -74,21 +75,37 @@ class WelcomeScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 height: 55,
-                child: OutlinedButton(
+                child: ElevatedButton(
                   onPressed: () => LoginBottomSheet.show(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.black, width: 1.5),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 5,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
+                    padding: EdgeInsets.zero,
                   ),
                   child: const Text(
                     'Log In',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Guest Login Button
+              TextButton(
+                onPressed: () {
+                  context.read<UserManager>().loginAsGuest();
+                  Navigator.pushReplacementNamed(context, '/home');
+                },
+                child: const Text(
+                  'เข้าใช้งานแบบ Guest',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A1A),
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),
