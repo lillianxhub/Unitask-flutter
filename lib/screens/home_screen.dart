@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/project.dart';
 import '../models/project_manager.dart';
+import '../models/task.dart';
 import '../widgets/add_project_bottom_sheet.dart';
 import '../widgets/invite_member_bottom_sheet.dart';
+import 'package:provider/provider.dart';
+import '../models/user_manager.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -44,8 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final projects = ProjectManager.instance.getAllProjects();
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -55,20 +56,29 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildSearchBar(),
             const SizedBox(height: 8),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDueDateHeader(),
-                    const SizedBox(height: 16),
-                    _buildStaticDueCard(),
-                    const SizedBox(height: 28),
-                    _buildProjectSectionHeader(),
-                    const SizedBox(height: 8),
-                    ...projects.map((p) => _buildProjectCard(p)),
-                  ],
-                ),
+              child: Consumer<ProjectManager>(
+                builder: (context, manager, child) {
+                  final projects = manager.projects;
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDueDateHeader(),
+                        const SizedBox(height: 16),
+                        _buildUpcomingTasksList(projects),
+                        const SizedBox(height: 28),
+                        _buildProjectSectionHeader(),
+                        const SizedBox(height: 8),
+                        Column(
+                          children: projects
+                              .map((p) => _buildProjectCard(p))
+                              .toList(),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -84,13 +94,30 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'UniTask',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'UniTask',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              Consumer<UserManager>(
+                builder: (context, user, child) {
+                  return Text(
+                    'สวัสดี, ${user.name}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF6750A4),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.notifications_none, size: 28),
@@ -140,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildDueDateHeader() {
     return const Text(
-      'Due date',
+      'Upcoming',
       style: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.bold,
@@ -149,50 +176,169 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStaticDueCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+  Widget _buildUpcomingTasksList(List<Project> projects) {
+    // 1. Extract all incomplete tasks
+    List<Map<String, dynamic>> allTasks = [];
+    for (var project in projects) {
+      for (var task in project.tasks) {
+        if (!task.isCompleted) {
+          allTasks.add({'task': task, 'project': project});
+        }
+      }
+    }
+
+    // 2. Sort by due date (ascending)
+    allTasks.sort((a, b) {
+      final Task taskA = a['task'];
+      final Task taskB = b['task'];
+      return taskA.dueDate.compareTo(taskB.dueDate);
+    });
+
+    if (allTasks.isEmpty) {
+      // Empty State
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 30),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Dashboard API',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Text(
-              'Description',
-              style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today,
-                  size: 18,
-                  color: Color(0xFF888888),
-                ),
-                const SizedBox(width: 6),
-                const Text(
-                  '7/1/2569',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
-                ),
-                const SizedBox(width: 16),
-                const Icon(
-                  Icons.access_time,
-                  size: 18,
-                  color: Color(0xFF888888),
-                ),
-                const SizedBox(width: 6),
-                const Text(
-                  '23:59',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
-                ),
-              ],
+          children: const [
+            Icon(Icons.coffee_outlined, size: 48, color: Color(0xFFBDBDBD)),
+            SizedBox(height: 12),
+            Text(
+              'ตอนนี้ไม่มีงานด่วน ไปพักผ่อนได้เลย!',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF888888),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
+        ),
+      );
+    }
+
+    // Limit to top 3 urgent tasks
+    final int displayCount = allTasks.length > 3 ? 3 : allTasks.length;
+    final urgentTasks = allTasks.sublist(0, displayCount);
+
+    return Column(
+      children: urgentTasks.map((t) {
+        return _buildUrgentTaskCard(t['task'] as Task, t['project'] as Project);
+      }).toList(),
+    );
+  }
+
+  Widget _buildUrgentTaskCard(Task task, Project project) {
+    final now = DateTime.now();
+    // Consider overdue if due date is before today (ignoring time for simplicity)
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(
+      task.dueDate.year,
+      task.dueDate.month,
+      task.dueDate.day,
+    );
+    final isOverdue = due.isBefore(today);
+
+    final num daysDiff = due.difference(today).inDays;
+    String dueText;
+    if (isOverdue) {
+      dueText = 'Overdue by ${-daysDiff} day(s)';
+    } else if (daysDiff == 0) {
+      dueText = 'Today';
+    } else if (daysDiff == 1) {
+      dueText = 'Tomorrow';
+    } else {
+      dueText =
+          '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}';
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/project-detail',
+          arguments: {'name': project.name, 'email': project.memberEmail},
+        );
+      },
+      child: Card(
+        elevation: 2,
+        margin: const EdgeInsets.only(bottom: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      task.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      project.name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF888888),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (task.description.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  task.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: isOverdue ? Colors.red : const Color(0xFF888888),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    dueText,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isOverdue
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isOverdue ? Colors.red : const Color(0xFF888888),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
