@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InviteMemberBottomSheet extends StatefulWidget {
   final void Function(String email)? onInvite;
@@ -27,11 +28,37 @@ class InviteMemberBottomSheet extends StatefulWidget {
 
 class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
   final _emailController = TextEditingController();
+  List<Map<String, dynamic>> _searchResults = [];
 
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String query) async {
+    final text = query.trim().toLowerCase();
+    if (text.isEmpty) {
+      if (mounted) setState(() => _searchResults = []);
+      return;
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isGreaterThanOrEqualTo: text)
+          .where('email', isLessThan: '$text\uf8ff')
+          .limit(5)
+          .get();
+
+      if (mounted) {
+        setState(() {
+          _searchResults = snapshot.docs.map((doc) => doc.data()).toList();
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _searchResults = []);
+    }
   }
 
   @override
@@ -65,10 +92,11 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
             ],
           ),
           const SizedBox(height: 24),
-          // Email
+          // Custom Search Field
           TextField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
+            onChanged: _onSearchChanged,
             decoration: InputDecoration(
               hintText: 'Enter Email',
               hintStyle: const TextStyle(color: Color(0xFF999999)),
@@ -84,6 +112,52 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
               ),
             ),
           ),
+          if (_searchResults.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ListView.separated(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _searchResults.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final option = _searchResults[index];
+                  return ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFCFBDF6),
+                      child: Icon(Icons.person, color: Colors.white, size: 20),
+                    ),
+                    title: Text(
+                      option['name'] ?? 'Unknown User',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      option['email'] ?? '',
+                      style: const TextStyle(color: Color(0xFF888888)),
+                    ),
+                    onTap: () {
+                      _emailController.text = option['email'] as String;
+                      setState(() {
+                        _searchResults = [];
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           // Role dropdown
           Container(

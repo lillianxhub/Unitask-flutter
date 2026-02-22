@@ -153,13 +153,15 @@ class ProfileScreen extends StatelessWidget {
                               Icons.logout,
                               'ออกจากระบบ',
                               color: const Color(0xFFFF8A80),
-                              onTap: () {
-                                userManager.logout();
-                                Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  '/welcome',
-                                  (route) => false,
-                                );
+                              onTap: () async {
+                                await userManager.logout();
+                                if (context.mounted) {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    '/welcome',
+                                    (route) => false,
+                                  );
+                                }
                               },
                             ),
                       ),

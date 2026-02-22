@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/project.dart';
 import '../models/project_manager.dart';
 import '../models/task.dart';
@@ -32,12 +33,14 @@ class _HomeScreenState extends State<HomeScreen> {
     InviteMemberBottomSheet.show(
       context,
       onInvite: (email) {
+        final currentUser = FirebaseAuth.instance.currentUser;
         ProjectManager.instance.addProject(
           Project(
             name: name,
             description: description.isEmpty ? 'Describe' : description,
             dueDate: dueDate,
-            memberEmail: email.isNotEmpty ? email : null,
+            ownerId: currentUser?.uid ?? 'guest',
+            members: email.isNotEmpty ? [email] : [],
           ),
         );
         _refreshProjects();
@@ -119,10 +122,41 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_none, size: 28),
-            onPressed: () {},
-            color: Colors.black,
+          Consumer<ProjectManager>(
+            builder: (context, manager, child) {
+              final userEmail = FirebaseAuth.instance.currentUser?.email;
+              final hasPending = manager.projects.any(
+                (p) => p.pendingMembers.contains(userEmail),
+              );
+
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none, size: 28),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/notifications');
+                    },
+                    color: Colors.black,
+                  ),
+                  if (hasPending)
+                    Positioned(
+                      right: 12,
+                      top: 12,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 10,
+                          minHeight: 10,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -261,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.pushNamed(
           context,
           '/project-detail',
-          arguments: {'name': project.name, 'email': project.memberEmail},
+          arguments: {'name': project.name},
         );
       },
       child: Card(
@@ -369,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.pushNamed(
           context,
           '/project-detail',
-          arguments: {'name': project.name, 'email': project.memberEmail},
+          arguments: {'name': project.name},
         );
       },
       child: Card(

@@ -24,13 +24,19 @@ class RegisterBottomSheet extends StatefulWidget {
 class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -86,6 +92,7 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
           // Password
           _buildField(
             'Enter Password',
+            controller: _passwordController,
             obscure: _obscurePassword,
             isPasswordField: true,
             inputType: TextInputType.visiblePassword,
@@ -100,6 +107,7 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
           // Confirm Password
           _buildField(
             'Confirm Password',
+            controller: _confirmPasswordController,
             obscure: _obscureConfirmPassword,
             isPasswordField: true,
             inputType: TextInputType.visiblePassword,
@@ -123,26 +131,52 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
                 borderRadius: BorderRadius.circular(30),
               ),
               child: ElevatedButton(
-                onPressed: () {
-                  // Get values from controllers
-                  final name = _nameController.text;
-                  final email = _emailController.text;
-                  // Simple validation
-                  if (name.isNotEmpty && email.isNotEmpty) {
-                    context.read<UserManager>().register(
-                      name,
-                      email,
-                      'password',
-                    ); // Dummy password
-                    Navigator.pop(context);
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/splash',
-                      (route) => false,
-                      arguments: 'HOME',
-                    );
-                  }
-                },
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        final name = _nameController.text.trim();
+                        final email = _emailController.text.trim();
+                        final password = _passwordController.text;
+                        final confirmPassword = _confirmPasswordController.text;
+
+                        if (name.isEmpty || email.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please fill all fields'),
+                            ),
+                          );
+                          return;
+                        }
+                        if (password != confirmPassword) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Passwords do not match'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        setState(() => _isLoading = true);
+                        final error = await context
+                            .read<UserManager>()
+                            .register(name, email, password);
+                        if (!mounted) return;
+                        setState(() => _isLoading = false);
+
+                        if (error == null) {
+                          Navigator.pop(context);
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/splash',
+                            (route) => false,
+                            arguments: 'HOME',
+                          );
+                        } else {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(error)));
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -150,14 +184,23 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text(
-                  'Register',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Register',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
           ),
