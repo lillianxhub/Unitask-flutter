@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1079443073222",
+    "project_id": "unitask-app",
+    "storage_bucket": "unitask-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079443073222:android:29165cd1145570b70ecfc7",
+        "android_client_info": {
+          "package_name": "com.example.unitask_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1079443073222-sv5lqb2brbs5g08p7tdl0o9kdm9kccc6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD72Oo1-g2UX99L9pkWoCuTotMbNQ8Qpxo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1079443073222-sv5lqb2brbs5g08p7tdl0o9kdm9kccc6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

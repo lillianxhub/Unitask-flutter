@@ -23,11 +23,14 @@ class LoginBottomSheet extends StatefulWidget {
 
 class _LoginBottomSheetState extends State<LoginBottomSheet> {
   bool _obscurePassword = true;
+  bool _isLoading = false;
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -71,12 +74,17 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
           const SizedBox(height: 24),
 
           // Email field
-          _buildField('Enter Email', controller: _emailController),
+          _buildField(
+            'Enter Email',
+            controller: _emailController,
+            inputType: TextInputType.emailAddress,
+          ),
           const SizedBox(height: 16),
 
           // Password field
           _buildField(
             'Enter Password',
+            controller: _passwordController,
             obscure: _obscurePassword,
             isPasswordField: true,
             onToggleVisibility: () {
@@ -98,19 +106,34 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                 borderRadius: BorderRadius.circular(30),
               ),
               child: ElevatedButton(
-                onPressed: () {
-                  // Get values
-                  final email = _emailController.text;
-                  if (email.isNotEmpty) {
-                    context.read<UserManager>().login(email, 'password');
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/splash',
-                      (route) => false,
-                      arguments: 'HOME',
-                    );
-                  }
-                },
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        final email = _emailController.text.trim();
+                        final password = _passwordController.text;
+                        if (email.isNotEmpty && password.isNotEmpty) {
+                          setState(() => _isLoading = true);
+                          final error = await context.read<UserManager>().login(
+                            email,
+                            password,
+                          );
+                          if (!mounted) return;
+                          setState(() => _isLoading = false);
+
+                          if (error == null) {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/splash',
+                              (route) => false,
+                              arguments: 'HOME',
+                            );
+                          } else {
+                            ScaffoldMessenger.of(
+                              context,
+                            ).showSnackBar(SnackBar(content: Text(error)));
+                          }
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -118,10 +141,19 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text(
-                  'Log In',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Log In',
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
               ),
             ),
           ),

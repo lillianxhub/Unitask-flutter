@@ -93,11 +93,62 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // Google Sign In button
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final error = await context
+                        .read<UserManager>()
+                        .signInWithGoogle();
+                    if (context.mounted) {
+                      if (error == null) {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/splash',
+                          arguments: 'HOME',
+                        );
+                      } else {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(error)));
+                      }
+                    }
+                  },
+                  icon: const Icon(
+                    Icons.g_mobiledata,
+                    size: 40,
+                    color: Color(0xFFDB4437),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  label: const Text(
+                    'Sign in with Google',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF757575),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               // Guest Login Button
               TextButton(
                 onPressed: () {
                   context.read<UserManager>().loginAsGuest();
-                  Navigator.pushReplacementNamed(context, '/home');
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/splash',
+                    arguments: 'HOME',
+                  );
                 },
                 child: const Text(
                   'เข้าใช้งานแบบ Guest',

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'models/project_manager.dart';
 import 'models/user_manager.dart';
@@ -11,7 +13,12 @@ import 'screens/members_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/main_layout.dart';
 
-void main() {
+import 'screens/notifications_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(
     MultiProvider(
       providers: [
@@ -47,6 +54,7 @@ class UniTaskApp extends StatelessWidget {
         '/project-detail': (_) => const ProjectDetailScreen(),
         '/members': (_) => const MembersScreen(),
         '/profile': (_) => const ProfileScreen(),
+        '/notifications': (_) => const NotificationsScreen(),
       },
     );
   }

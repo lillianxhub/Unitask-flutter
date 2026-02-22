@@ -5,6 +5,7 @@ import '../models/task.dart';
 import '../widgets/add_task_bottom_sheet.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/task_detail_bottom_sheet.dart';
+import '../widgets/invite_member_bottom_sheet.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   const ProjectDetailScreen({super.key});
@@ -15,16 +16,10 @@ class ProjectDetailScreen extends StatefulWidget {
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   bool _isTaskTab = true;
-  bool _isDefaultProject = true;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final projectName = args?['name'] as String? ?? 'Mobile Project';
-    _isDefaultProject =
-        projectName == 'Mobile Project' || projectName == 'Nahi Clinic';
   }
 
   void _onTaskAdded(
@@ -69,7 +64,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final projectName = args?['name'] as String? ?? 'Mobile Project';
-    final memberEmail = args?['email'] as String?;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -106,118 +100,142 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     // Project header
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Consumer<ProjectManager>(
+                        builder: (context, manager, child) {
+                          final project = manager.projects.firstWhere(
+                            (p) => p.name == projectName,
+                            orElse: () => manager.projects.first,
+                          );
+                          final taskCount = project.tasks.length;
+                          final memberCount = project.members.length;
+                          // In the original, the owner is not always in the 'members' array, so let's check
+                          final totalMembers = memberCount > 0
+                              ? memberCount
+                              : 1;
+                          final progress = project.progress;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  projectName,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  if (value == 'Delete') {
-                                    context
-                                        .read<ProjectManager>()
-                                        .deleteProject(projectName);
-                                    Navigator.pop(context);
-                                  }
-                                },
-                                itemBuilder: (BuildContext context) {
-                                  return {'Delete'}.map((String choice) {
-                                    return PopupMenuItem<String>(
-                                      value: choice,
-                                      child: Text(
-                                        choice,
-                                        style: const TextStyle(
-                                          color: Colors.red,
-                                        ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      project.name,
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
                                       ),
-                                    );
-                                  }).toList();
-                                },
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.black,
+                                    ),
+                                  ),
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value == 'Delete') {
+                                        context
+                                            .read<ProjectManager>()
+                                            .deleteProject(project.name);
+                                        Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          '/home',
+                                          (route) => false,
+                                          arguments: {'tabIndex': 0},
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (BuildContext context) {
+                                      return {'Delete'}.map((String choice) {
+                                        return PopupMenuItem<String>(
+                                          value: choice,
+                                          child: Text(
+                                            choice,
+                                            style: const TextStyle(
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList();
+                                    },
+                                    icon: const Icon(
+                                      Icons.more_vert,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                project.description,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF828282),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Text(
+                                    '$taskCount Task${taskCount == 1 ? '' : 's'}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF4F4F4F),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Icon(
+                                    Icons.person_outline,
+                                    size: 16,
+                                    color: Color(0xFF4F4F4F),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$totalMembers member${totalMembers == 1 ? '' : 's'}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF4F4F4F),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Progress Bar',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF4F4F4F),
+                                    ),
+                                  ),
+                                  Text(
+                                    '$progress%',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF4F4F4F),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: progress / 100,
+                                  backgroundColor: const Color(0xFFE0E0E0),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                        Color(0xFFCFBDF6),
+                                      ),
+                                  minHeight: 8,
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Description',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF828282),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: const [
-                              Text(
-                                '10 Task',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF4F4F4F),
-                                ),
-                              ),
-                              SizedBox(width: 16),
-                              Icon(
-                                Icons.person_outline,
-                                size: 16,
-                                color: Color(0xFF4F4F4F),
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                '4 members',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF4F4F4F),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
-                                'Progress Bar',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF4F4F4F),
-                                ),
-                              ),
-                              Text(
-                                '65%',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF4F4F4F),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: const LinearProgressIndicator(
-                              value: 0.65,
-                              backgroundColor: Color(0xFFE0E0E0),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFFCFBDF6),
-                              ),
-                              minHeight: 8,
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -285,7 +303,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     if (_isTaskTab)
                       _buildTasksContent()
                     else
-                      _buildMembersContent(memberEmail),
+                      _buildMembersContent(context, projectName),
                   ],
                 ),
               ),
@@ -498,52 +516,78 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
-  Widget _buildMembersContent(String? memberEmail) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildMembersContent(BuildContext context, String projectName) {
+    return Consumer<ProjectManager>(
+      builder: (context, manager, child) {
+        final project = manager.projects.firstWhere(
+          (p) => p.name == projectName,
+          orElse: () => manager.projects.first,
+        );
+
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Members',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: Row(
-                  children: const [
-                    Icon(Icons.add, size: 16, color: Color(0xFF6750A4)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Invite',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF6750A4)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Members',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
-                  ],
-                ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      InviteMemberBottomSheet.show(
+                        context,
+                        onInvite: (email) {
+                          if (email.isNotEmpty) {
+                            context.read<ProjectManager>().inviteMember(
+                              projectName,
+                              email,
+                            );
+                          }
+                        },
+                      );
+                    },
+                    child: Row(
+                      children: const [
+                        Icon(Icons.add, size: 16, color: Color(0xFF6750A4)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Invite',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6750A4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 16),
+              // Owner
+              _buildMemberCard('You (Owner)', project.ownerId, isOwner: true),
+              const SizedBox(height: 12),
+
+              // Dynamic Members
+              ...project.members
+                  .where((email) => email != project.ownerId)
+                  .map(
+                    (email) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildMemberCard('Project Member', email),
+                    ),
+                  ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Owner
-          _buildMemberCard('You (Owner)', 'admin@unitask.com', isOwner: true),
-          const SizedBox(height: 12),
-          // Members for default projects
-          if (_isDefaultProject) ...[
-            _buildMemberCard('Member 1', 'member1@gmail.com'),
-            const SizedBox(height: 12),
-            _buildMemberCard('Member 2', 'member2@gmail.com'),
-          ] else if (memberEmail != null && memberEmail.isNotEmpty) ...[
-            _buildMemberCard('Invited Member', memberEmail),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
