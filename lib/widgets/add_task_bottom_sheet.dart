@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AddTaskBottomSheet extends StatefulWidget {
+  final List<String> members;
   final void Function(
     String name,
     String description,
@@ -10,10 +11,11 @@ class AddTaskBottomSheet extends StatefulWidget {
   )?
   onSave;
 
-  const AddTaskBottomSheet({super.key, this.onSave});
+  const AddTaskBottomSheet({super.key, required this.members, this.onSave});
 
   static void show(
     BuildContext context, {
+    required List<String> members,
     void Function(
       String name,
       String description,
@@ -30,7 +32,7 @@ class AddTaskBottomSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => AddTaskBottomSheet(onSave: onSave),
+      builder: (_) => AddTaskBottomSheet(members: members, onSave: onSave),
     );
   }
 
@@ -42,8 +44,16 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _dueDateController = TextEditingController();
-  final String _assignedTo = 'Assigned To';
-  final String _priority = 'Priority';
+  String? _assignedTo;
+  String _priority = 'Medium';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.members.isNotEmpty) {
+      _assignedTo = widget.members.first;
+    }
+  }
 
   @override
   void dispose() {
@@ -111,30 +121,43 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
           ),
           const SizedBox(height: 16),
           // Assigned To
-          GestureDetector(
-            onTap: () {
-              // Dropdown mockup — could expand later
-            },
-            child: Container(
-              width: double.infinity,
-              height: 55,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _assignedTo,
-                    style: const TextStyle(
-                      color: Color(0xFF999999),
-                      fontSize: 16,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: Color(0xFF999999)),
-                ],
+          Container(
+            width: double.infinity,
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: widget.members.contains(_assignedTo)
+                    ? _assignedTo
+                    : null,
+                hint: const Text(
+                  'Assigned To',
+                  style: TextStyle(color: Color(0xFF999999), fontSize: 16),
+                ),
+                icon: const Icon(
+                  Icons.arrow_drop_down,
+                  color: Color(0xFF999999),
+                ),
+                isExpanded: true,
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _assignedTo = newValue;
+                    });
+                  }
+                },
+                items: widget.members.map<DropdownMenuItem<String>>((
+                  String value,
+                ) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -156,32 +179,22 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
           ),
           const SizedBox(height: 16),
           // Priority
-          GestureDetector(
-            onTap: () {
-              // Dropdown mockup
-            },
-            child: Container(
-              width: double.infinity,
-              height: 55,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _priority,
-                    style: const TextStyle(
-                      color: Color(0xFF999999),
-                      fontSize: 16,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: Color(0xFF999999)),
-                ],
-              ),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              ' Priority',
+              style: TextStyle(fontSize: 14, color: Color(0xFF999999)),
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _buildPriorityChip('High', Colors.red)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildPriorityChip('Medium', Colors.orange)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildPriorityChip('Low', Colors.blue)),
+            ],
           ),
           const SizedBox(height: 32),
           // Save button
@@ -203,7 +216,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                     widget.onSave?.call(
                       name,
                       _descController.text.trim(),
-                      _assignedTo,
+                      _assignedTo ?? '',
                       _dueDateController.text.trim(),
                       _priority,
                     );
@@ -243,6 +256,36 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
         borderSide: BorderSide.none,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
+  Widget _buildPriorityChip(String label, MaterialColor color) {
+    final isSelected = _priority == label;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _priority = label;
+        });
+      },
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: isSelected ? color : color.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : color.shade200,
+            width: 1,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : color.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 }

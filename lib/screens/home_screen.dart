@@ -32,15 +32,23 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showInviteMember(String name, String description, String dueDate) {
     InviteMemberBottomSheet.show(
       context,
-      onInvite: (email) {
+      onInvite: (email, role) {
         final currentUser = FirebaseAuth.instance.currentUser;
+        final userManager = context.read<UserManager>();
         ProjectManager.instance.addProject(
           Project(
             name: name,
             description: description.isEmpty ? 'Describe' : description,
             dueDate: dueDate,
             ownerId: currentUser?.uid ?? 'guest',
+            ownerName: userManager.name.isNotEmpty
+                ? userManager.name
+                : 'Project Owner',
+            ownerEmail: userManager.email.isNotEmpty
+                ? userManager.email
+                : 'owner@unitask.com',
             members: email.isNotEmpty ? [email] : [],
+            memberRoles: email.isNotEmpty ? {email: role} : {},
           ),
         );
         _refreshProjects();
@@ -124,10 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Consumer<ProjectManager>(
             builder: (context, manager, child) {
+              final unreadCount = manager.unreadNotificationsCount;
               final userEmail = FirebaseAuth.instance.currentUser?.email;
               final hasPending = manager.projects.any(
                 (p) => p.pendingMembers.contains(userEmail),
               );
+              final hasNotifications = unreadCount > 0 || hasPending;
 
               return Stack(
                 children: [
@@ -138,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     color: Colors.black,
                   ),
-                  if (hasPending)
+                  if (hasNotifications)
                     Positioned(
                       right: 12,
                       top: 12,
@@ -476,31 +486,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.chat_bubble_outline,
                         size: 16,
                         color: Color(0xFF888888),
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
-                        '5',
-                        style: TextStyle(
+                        '${project.comments.length}',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF888888),
                         ),
                       ),
-                      SizedBox(width: 12),
-                      Icon(
+                      const SizedBox(width: 12),
+                      const Icon(
                         Icons.attach_file,
                         size: 16,
                         color: Color(0xFF888888),
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
-                        '1',
-                        style: TextStyle(
+                        '${project.tasks.length}',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF888888),
                         ),

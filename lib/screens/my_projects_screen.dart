@@ -120,7 +120,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
       onTap: () {
         Navigator.pushNamed(
           context,
-          '/my-project-detail',
+          '/project-detail',
           arguments: {'name': project.name},
         );
       },
@@ -207,9 +207,9 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                         color: Color(0xFF888888),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        '5',
-                        style: TextStyle(
+                      Text(
+                        '${project.comments.length}',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF888888),
                         ),
@@ -221,9 +221,9 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                         color: Color(0xFF888888),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        '1',
-                        style: TextStyle(
+                      Text(
+                        '${project.tasks.length}',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF888888),
                         ),

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InviteMemberBottomSheet extends StatefulWidget {
-  final void Function(String email)? onInvite;
+  final void Function(String email, String role)? onInvite;
 
   const InviteMemberBottomSheet({super.key, this.onInvite});
 
   static void show(
     BuildContext context, {
-    void Function(String email)? onInvite,
+    void Function(String email, String role)? onInvite,
   }) {
     showModalBottomSheet(
       context: context,
@@ -29,6 +29,7 @@ class InviteMemberBottomSheet extends StatefulWidget {
 class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
   final _emailController = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
+  String _selectedRole = 'Editor';
 
   @override
   void dispose() {
@@ -168,15 +169,34 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Role',
-                  style: TextStyle(color: Color(0xFF999999), fontSize: 16),
-                ),
-                Icon(Icons.arrow_drop_down, color: Colors.black),
-              ],
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedRole,
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
+                style: const TextStyle(color: Colors.black, fontSize: 16),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedRole = newValue;
+                    });
+                  }
+                },
+                items: <String>['Editor', 'Viewer']
+                    .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            color: value == _selectedRole
+                                ? Colors.black
+                                : const Color(0xFF999999),
+                          ),
+                        ),
+                      );
+                    })
+                    .toList(),
+              ),
             ),
           ),
           const SizedBox(height: 32),
@@ -195,7 +215,7 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
                 onPressed: () {
                   final email = _emailController.text.trim();
                   Navigator.pop(context);
-                  widget.onInvite?.call(email);
+                  widget.onInvite?.call(email, _selectedRole);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,

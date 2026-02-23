@@ -1,9 +1,14 @@
+import 'project.dart';
+
 class Task {
   String title;
   String description;
   DateTime dueDate;
   DateTime createdDate;
   bool isCompleted;
+  String? assignedTo;
+  String priority;
+  List<Comment> comments;
 
   Task({
     required this.title,
@@ -11,7 +16,10 @@ class Task {
     required this.dueDate,
     required this.createdDate,
     this.isCompleted = false,
-  });
+    this.assignedTo,
+    this.priority = 'Medium',
+    List<Comment>? comments,
+  }) : comments = comments ?? [];
 
   Map<String, dynamic> toJson() {
     return {
@@ -20,6 +28,9 @@ class Task {
       'dueDate': dueDate.toIso8601String(),
       'createdDate': createdDate.toIso8601String(),
       'isCompleted': isCompleted,
+      'assignedTo': assignedTo,
+      'priority': priority,
+      'comments': comments.map((c) => c.toJson()).toList(),
     };
   }
 
@@ -34,6 +45,13 @@ class Task {
           ? DateTime.parse(json['createdDate'])
           : DateTime.now(),
       isCompleted: json['isCompleted'] ?? false,
+      assignedTo: json['assignedTo'],
+      priority: json['priority'] ?? 'Medium',
+      comments:
+          (json['comments'] as List<dynamic>?)
+              ?.map((c) => Comment.fromJson(c))
+              .toList() ??
+          [],
     );
   }
 }
