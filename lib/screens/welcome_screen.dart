@@ -99,21 +99,21 @@ class WelcomeScreen extends StatelessWidget {
                 height: 55,
                 child: ElevatedButton.icon(
                   onPressed: () async {
+                    // Capture navigator and messenger early before async gap
+                    final navigator = Navigator.of(context);
+                    final messenger = ScaffoldMessenger.of(context);
+
                     final error = await context
                         .read<UserManager>()
                         .signInWithGoogle();
-                    if (context.mounted) {
-                      if (error == null) {
-                        Navigator.pushReplacementNamed(
-                          context,
-                          '/splash',
-                          arguments: 'HOME',
-                        );
-                      } else {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(error)));
-                      }
+
+                    if (error == null) {
+                      navigator.pushReplacementNamed(
+                        '/splash',
+                        arguments: 'HOME',
+                      );
+                    } else {
+                      messenger.showSnackBar(SnackBar(content: Text(error)));
                     }
                   },
                   icon: const Icon(

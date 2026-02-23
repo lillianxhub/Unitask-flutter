@@ -1,14 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/project.dart';
+import '../models/project_manager.dart';
+import '../models/user_manager.dart';
 import '../widgets/bottom_nav.dart';
 
-class MyProjectDetailScreen extends StatelessWidget {
+class MyProjectDetailScreen extends StatefulWidget {
   const MyProjectDetailScreen({super.key});
+
+  @override
+  State<MyProjectDetailScreen> createState() => _MyProjectDetailScreenState();
+}
+
+class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
+  final TextEditingController _commentController = TextEditingController();
+  List<String> _memberNames = [];
+  bool _isLoadingMembers = true;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fetchMemberNames();
+  }
+
+  Future<void> _fetchMemberNames() async {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final projectName = args?['name'] as String? ?? '';
+    if (projectName.isEmpty) return;
+
+    try {
+      final project = context.read<ProjectManager>().projects.firstWhere(
+        (p) => p.name == projectName,
+        orElse: () =>
+            Project(name: '', description: '', dueDate: '', ownerId: ''),
+      );
+
+      if (project.members.isEmpty) {
+        if (mounted)
+          setState(() {
+            _isLoadingMembers = false;
+          });
+        return;
+      }
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', whereIn: project.members)
+          .get();
+
+      final names = querySnapshot.docs
+          .map((doc) => doc.data()['name'] as String)
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _memberNames = names.isNotEmpty ? names : project.members;
+          _isLoadingMembers = false;
+        });
+      }
+    } catch (e) {
+      if (mounted)
+        setState(() {
+          _isLoadingMembers = false;
+        });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final projectName = args?['name'] as String? ?? 'Mobile project';
+
+    final projectManager = context.watch<ProjectManager>();
+    final project = projectManager.projects.firstWhere(
+      (p) => p.name == projectName,
+      orElse: () =>
+          Project(name: projectName, description: '', dueDate: '', ownerId: ''),
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -66,9 +143,11 @@ class MyProjectDetailScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Description',
-                            style: TextStyle(
+                          Text(
+                            project.description.isEmpty
+                                ? 'No Description'
+                                : project.description,
+                            style: const TextStyle(
                               fontSize: 14,
                               color: Color(0xFF828282),
                             ),
@@ -76,9 +155,9 @@ class MyProjectDetailScreen extends StatelessWidget {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Text(
-                                '10 Task',
-                                style: TextStyle(
+                              Text(
+                                '${project.tasks.length} Task',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF4F4F4F),
                                 ),
@@ -90,9 +169,9 @@ class MyProjectDetailScreen extends StatelessWidget {
                                 color: Color(0xFF4F4F4F),
                               ),
                               const SizedBox(width: 4),
-                              const Text(
-                                '4 members',
-                                style: TextStyle(
+                              Text(
+                                '${project.members.length} members',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF4F4F4F),
                                 ),
@@ -103,8 +182,8 @@ class MyProjectDetailScreen extends StatelessWidget {
                           // Progress bar
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 'Progress Bar',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -112,8 +191,8 @@ class MyProjectDetailScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '65%',
-                                style: TextStyle(
+                                '${project.progress}%',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF4F4F4F),
                                 ),
@@ -123,10 +202,12 @@ class MyProjectDetailScreen extends StatelessWidget {
                           const SizedBox(height: 4),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: const LinearProgressIndicator(
-                              value: 0.65,
-                              backgroundColor: Color(0xFFE0E0E0),
-                              valueColor: AlwaysStoppedAnimation<Color>(
+                            child: LinearProgressIndicator(
+                              value: project.tasks.isEmpty
+                                  ? 0
+                                  : project.progress / 100,
+                              backgroundColor: const Color(0xFFE0E0E0),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
                                 Color(0xFFCFBDF6),
                               ),
                               minHeight: 8,
@@ -151,11 +232,16 @@ class MyProjectDetailScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _detailRow('ผู้รับผิดชอบ', 'คุณ,เพชร,บอส'),
+                          _detailRow(
+                            'ผู้รับผิดชอบ',
+                            _isLoadingMembers
+                                ? 'กำลังโหลด...'
+                                : _memberNames.join(', '),
+                          ),
                           const SizedBox(height: 16),
-                          _detailRow('วันครบกำหนด', '12 ม.ค'),
+                          _detailRow('วันครบกำหนด', project.dueDate),
                           const SizedBox(height: 16),
-                          _detailRow('สถานะ', 'ยังไม่เริ่มทำ'),
+                          _detailRow('สถานะ', project.status),
                         ],
                       ),
                     ),
@@ -175,9 +261,21 @@ class MyProjectDetailScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _commentItem(),
-                          const SizedBox(height: 12),
-                          _commentItem(),
+                          if (project.comments.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Text(
+                                'ยังไม่มีความคิดเห็น',
+                                style: TextStyle(color: Color(0xFF888888)),
+                              ),
+                            )
+                          else
+                            ...project.comments.map(
+                              (comment) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _commentItem(comment),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -204,6 +302,7 @@ class MyProjectDetailScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
+                      controller: _commentController,
                       decoration: const InputDecoration(
                         hintText: 'เขียนความคิดเห็น...',
                         hintStyle: TextStyle(color: Color(0xFFBDBDBD)),
@@ -212,19 +311,40 @@ class MyProjectDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Container(
-                    width: 45,
-                    height: 45,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
+                  GestureDetector(
+                    onTap: () {
+                      final text = _commentController.text.trim();
+                      if (text.isNotEmpty) {
+                        final userManager = context.read<UserManager>();
+                        final comment = Comment(
+                          id: UniqueKey().toString(),
+                          authorEmail: userManager.email,
+                          authorName: userManager.name,
+                          text: text,
+                          timestamp: DateTime.now(),
+                        );
+                        context.read<ProjectManager>().addComment(
+                          project.name,
+                          comment,
+                        );
+                        _commentController.clear();
+                        FocusScope.of(context).unfocus();
+                      }
+                    },
+                    child: Container(
+                      width: 45,
+                      height: 45,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 24,
+                      child: const Icon(
+                        Icons.send,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ],
@@ -269,31 +389,39 @@ class MyProjectDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _commentItem() {
+  Widget _commentItem(Comment comment) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 18,
-          backgroundColor: Color(0xFFCFBDF6),
-          child: Icon(Icons.person, color: Colors.white, size: 20),
+          backgroundColor: const Color(0xFFCFBDF6),
+          child: Text(
+            comment.authorName.isNotEmpty
+                ? comment.authorName[0].toUpperCase()
+                : 'U',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'User',
-                style: TextStyle(
+              Text(
+                comment.authorName,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'This is a comment...',
-                style: TextStyle(color: Color(0xFF4F4F4F)),
+              Text(
+                comment.text,
+                style: const TextStyle(color: Color(0xFF4F4F4F)),
               ),
             ],
           ),
