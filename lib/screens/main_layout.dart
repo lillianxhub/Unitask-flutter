@@ -15,13 +15,18 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
+  bool _isInit = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null && args.containsKey('tabIndex')) {
-      _selectedIndex = args['tabIndex'] as int;
+    if (!_isInit) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null && args.containsKey('tabIndex')) {
+        _selectedIndex = args['tabIndex'] as int;
+      }
+      _isInit = true;
     }
   }
 
@@ -35,7 +40,7 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: IndexedStack(index: _selectedIndex, children: _pages),
 
       bottomNavigationBar: BottomNav(
         currentIndex: _selectedIndex,
