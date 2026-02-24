@@ -125,6 +125,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         );
       },
       child: Card(
+        color: Colors.white,
         elevation: 4,
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
