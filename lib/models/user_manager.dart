@@ -99,6 +99,8 @@ class UserManager extends ChangeNotifier {
     }
   }
 
+  bool _isGoogleSignInInitialized = false;
+
   Future<String?> signInWithGoogle() async {
     try {
       if (kIsWeb) {
@@ -111,14 +113,25 @@ class UserManager extends ChangeNotifier {
         }
         return null;
       } else {
-        final GoogleSignInAccount googleUser = await GoogleSignIn.instance
+        if (!_isGoogleSignInInitialized) {
+          await GoogleSignIn.instance.initialize(
+            serverClientId:
+                '1079443073222-sv5lqb2brbs5g08p7tdl0o9kdm9kccc6.apps.googleusercontent.com',
+          );
+          _isGoogleSignInInitialized = true;
+        }
+
+        final GoogleSignInAccount? googleUser = await GoogleSignIn.instance
             .authenticate();
+
+        if (googleUser == null) {
+          return 'Google Sign-In canceled';
+        }
 
         final GoogleSignInAuthentication googleAuth = googleUser.authentication;
         final GoogleSignInClientAuthorization? clientAuth = await googleUser
             .authorizationClient
             .authorizationForScopes(['email']);
-
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: clientAuth?.accessToken,
           idToken: googleAuth.idToken,
