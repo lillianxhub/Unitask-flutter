@@ -160,21 +160,46 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                 style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
               ),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  project.status,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF2E7D32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      project.status,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
                   ),
+                  Text(
+                    '${project.progress}%',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6750A4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: project.progress / 100,
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFF6750A4),
+                  ),
+                  minHeight: 8,
                 ),
               ),
               const SizedBox(height: 16),
