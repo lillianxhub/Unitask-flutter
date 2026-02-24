@@ -115,7 +115,21 @@ class ProjectManager extends ChangeNotifier {
         );
   }
 
-  List<Project> get projects => List.unmodifiable(_projects);
+  List<Project> get projects {
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
+    if (_userId == null || userEmail == null)
+      return List.unmodifiable(_projects);
+    return _projects.where((p) => p.members.contains(userEmail)).toList();
+  }
+
+  List<Project> get pendingProjects {
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
+    if (_userId == null || userEmail == null) return [];
+    return _projects
+        .where((p) => p.pendingMembers.contains(userEmail))
+        .toList();
+  }
+
   List<AppNotification> get notifications => List.unmodifiable(_notifications);
 
   int get unreadNotificationsCount {

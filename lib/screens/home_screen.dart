@@ -133,10 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Consumer<ProjectManager>(
             builder: (context, manager, child) {
               final unreadCount = manager.unreadNotificationsCount;
-              final userEmail = FirebaseAuth.instance.currentUser?.email;
-              final hasPending = manager.projects.any(
-                (p) => p.pendingMembers.contains(userEmail),
-              );
+              final hasPending = manager.pendingProjects.isNotEmpty;
               final hasNotifications = unreadCount > 0 || hasPending;
 
               return Stack(
