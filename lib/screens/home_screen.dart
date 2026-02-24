@@ -417,6 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       child: Card(
+        color: Colors.white,
         elevation: 4,
         margin: const EdgeInsets.symmetric(vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
