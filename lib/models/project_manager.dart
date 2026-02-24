@@ -162,9 +162,38 @@ class ProjectManager extends ChangeNotifier {
     }
     project.memberRoles[userEmail] = 'Owner';
 
-    await FirebaseFirestore.instance
+    final docRef = await FirebaseFirestore.instance
         .collection('projects')
         .add(project.toJson());
+
+    // Send invite notifications to pending members
+    if (project.pendingMembers.isNotEmpty) {
+      final batch = FirebaseFirestore.instance.batch();
+      final notificationsRef = FirebaseFirestore.instance.collection(
+        'notifications',
+      );
+
+      final senderName = project.ownerName.isNotEmpty
+          ? project.ownerName
+          : userEmail.split('@').first;
+
+      for (final memberEmail in project.pendingMembers) {
+        final notifDocRef = notificationsRef.doc();
+        batch.set(notifDocRef, {
+          'id': notifDocRef.id,
+          'recipientEmail': memberEmail,
+          'projectId': docRef.id,
+          'projectName': project.name,
+          'senderName': senderName,
+          'senderEmail': userEmail,
+          'type': 'invite',
+          'text': 'invited you to join the project',
+          'timestamp': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+      }
+      await batch.commit();
+    }
   }
 
   Future<void> addTask(String projectName, Task task) async {
@@ -470,6 +499,30 @@ class ProjectManager extends ChangeNotifier {
                 'pendingMembers': project.pendingMembers,
                 'memberRoles': project.memberRoles,
               });
+
+          // Send notification to the newly invited member
+          final userEmail =
+              FirebaseAuth.instance.currentUser?.email ?? 'System';
+          final senderName = project.ownerName.isNotEmpty
+              ? project.ownerName
+              : userEmail.split('@').first;
+
+          final notifDocRef = FirebaseFirestore.instance
+              .collection('notifications')
+              .doc();
+          await notifDocRef.set({
+            'id': notifDocRef.id,
+            'recipientEmail': email,
+            'projectId': project.id,
+            'projectName': project.name,
+            'senderName': senderName,
+            'senderEmail': userEmail,
+            'type': 'invite',
+            'text': 'invited you to join the project',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
+
           notifyListeners();
         }
       }
