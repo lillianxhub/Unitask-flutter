@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/project_manager.dart';
 
 class NotificationsScreen extends StatelessWidget {
@@ -8,9 +7,6 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userEmail =
-        FirebaseAuth.instance.currentUser?.email ?? 'guest@unitask.com';
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -47,10 +43,8 @@ class NotificationsScreen extends StatelessWidget {
             Expanded(
               child: Consumer<ProjectManager>(
                 builder: (context, manager, child) {
-                  // Filter projects where current user is only in pendingMembers
-                  final pendingProjects = manager.projects
-                      .where((p) => p.pendingMembers.contains(userEmail))
-                      .toList();
+                  // Get pending projects directly from manager
+                  final pendingProjects = manager.pendingProjects;
 
                   // Get unread notifications
                   final unreadNotifications = manager.notifications
