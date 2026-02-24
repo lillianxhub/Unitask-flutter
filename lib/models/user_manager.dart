@@ -121,19 +121,16 @@ class UserManager extends ChangeNotifier {
           _isGoogleSignInInitialized = true;
         }
 
-        final GoogleSignInAccount? googleUser = await GoogleSignIn.instance
+        final GoogleSignInAccount googleUser = await GoogleSignIn.instance
             .authenticate();
 
         if (googleUser == null) {
           return 'Google Sign-In canceled';
         }
 
-        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-        final GoogleSignInClientAuthorization? clientAuth = await googleUser
-            .authorizationClient
-            .authorizationForScopes(['email']);
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: clientAuth?.accessToken,
           idToken: googleAuth.idToken,
         );
 

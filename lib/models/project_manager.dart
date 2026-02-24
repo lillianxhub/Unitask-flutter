@@ -91,8 +91,9 @@ class ProjectManager extends ChangeNotifier {
             }
           },
           onError: (error) {
-            if (kDebugMode)
+            if (kDebugMode) {
               print('Error listening to pending projects: $error');
+            }
           },
         );
 

@@ -44,10 +44,11 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
       );
 
       if (project.members.isEmpty) {
-        if (mounted)
+        if (mounted) {
           setState(() {
             _isLoadingMembers = false;
           });
+        }
         return;
       }
 
@@ -67,10 +68,11 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoadingMembers = false;
         });
+      }
     }
   }
 
