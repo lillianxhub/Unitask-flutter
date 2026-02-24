@@ -47,7 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ownerEmail: userManager.email.isNotEmpty
                 ? userManager.email
                 : 'owner@unitask.com',
-            members: email.isNotEmpty ? [email] : [],
+            members: [],
+            pendingMembers: email.isNotEmpty ? [email] : [],
             memberRoles: email.isNotEmpty ? {email: role} : {},
           ),
         );

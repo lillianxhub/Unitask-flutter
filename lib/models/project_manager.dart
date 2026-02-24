@@ -104,6 +104,10 @@ class ProjectManager extends ChangeNotifier {
         .snapshots()
         .listen(
           (snapshot) {
+            if (kDebugMode)
+              print(
+                'Notification listener triggered for $userEmail: ${snapshot.docs.length} docs found.',
+              );
             _notifications = snapshot.docs.map((doc) {
               return AppNotification.fromJson(doc.data(), doc.id);
             }).toList();
@@ -166,6 +170,8 @@ class ProjectManager extends ChangeNotifier {
         .collection('projects')
         .add(project.toJson());
 
+    project.id = docRef.id;
+
     // Send invite notifications to pending members
     if (project.pendingMembers.isNotEmpty) {
       final batch = FirebaseFirestore.instance.batch();
@@ -193,6 +199,10 @@ class ProjectManager extends ChangeNotifier {
         });
       }
       await batch.commit();
+      if (kDebugMode)
+        print(
+          'Successfully created ${project.pendingMembers.length} invite notifications on project creation',
+        );
     }
   }
 
@@ -522,6 +532,9 @@ class ProjectManager extends ChangeNotifier {
             'timestamp': FieldValue.serverTimestamp(),
             'isRead': false,
           });
+
+          if (kDebugMode)
+            print('Successfully created invite notification for $email');
 
           notifyListeners();
         }
