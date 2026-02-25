@@ -16,8 +16,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,11 +29,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               padding: EdgeInsets.only(left: 24, top: 24),
               child: Text(
                 'My Project',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 16),
@@ -54,8 +52,8 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFF6750A4)
-                            : const Color(0xFFF5F5F5),
+                            ? cs.primary
+                            : cs.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -63,8 +61,8 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           color: isSelected
-                              ? Colors.white
-                              : const Color(0xFF4F4F4F),
+                              ? cs.onPrimary
+                              : cs.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -73,7 +71,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            Divider(height: 1, color: cs.outline),
             // Project list
             Expanded(
               child: SingleChildScrollView(
@@ -158,6 +156,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
   }
 
   Widget _buildProjectCard(Project project) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -167,8 +166,8 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         );
       },
       child: Card(
-        color: Colors.white,
-        surfaceTintColor: Colors.white,
+        color: cs.surface,
+        surfaceTintColor: cs.surface,
         elevation: 4,
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -190,11 +189,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                       ),
                     ),
                   ),
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 20,
-                    color: Colors.black,
-                  ),
+                  Icon(Icons.arrow_forward_ios, size: 20, color: cs.onSurface),
                 ],
               ),
               const SizedBox(height: 4),
@@ -209,10 +204,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   _buildStatusPill(project.status),
                   Text(
                     '${project.progress}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF6750A4),
+                      color: cs.primary,
                     ),
                   ),
                 ],
@@ -222,15 +217,13 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: project.progress / 100,
-                  backgroundColor: const Color(0xFFEEEEEE),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF6750A4),
-                  ),
+                  backgroundColor: cs.outline,
+                  valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
                   minHeight: 8,
                 ),
               ),
               const SizedBox(height: 16),
-              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              Divider(height: 1, color: cs.outline),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

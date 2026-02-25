@@ -28,7 +28,7 @@ class AddTaskBottomSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -78,6 +78,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
@@ -92,17 +93,17 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Add New Task',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close, color: Colors.black),
+                child: Icon(Icons.close, color: cs.onSurface),
               ),
             ],
           ),
@@ -110,6 +111,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
           // Task name
           TextField(
             controller: _nameController,
+            style: TextStyle(color: cs.onSurface),
             decoration: _inputDecoration('Enter task name'),
           ),
           const SizedBox(height: 16),
@@ -117,6 +119,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
           TextField(
             controller: _descController,
             maxLines: 4,
+            style: TextStyle(color: cs.onSurface),
             decoration: _inputDecoration('Enter description'),
           ),
           const SizedBox(height: 16),
@@ -126,7 +129,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
             height: 55,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
             child: DropdownButtonHideUnderline(
@@ -134,14 +137,18 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                 value: widget.members.contains(_assignedTo)
                     ? _assignedTo
                     : null,
-                hint: const Text(
+                hint: Text(
                   'Assigned To',
-                  style: TextStyle(color: Color(0xFF999999), fontSize: 16),
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.4),
+                    fontSize: 16,
+                  ),
                 ),
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_drop_down,
-                  color: Color(0xFF999999),
+                  color: cs.onSurface.withValues(alpha: 0.4),
                 ),
+                dropdownColor: cs.surface,
                 isExpanded: true,
                 onChanged: (String? newValue) {
                   if (newValue != null) {
@@ -168,10 +175,11 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
             child: AbsorbPointer(
               child: TextField(
                 controller: _dueDateController,
+                style: TextStyle(color: cs.onSurface),
                 decoration: _inputDecoration('Enter due date').copyWith(
-                  suffixIcon: const Icon(
+                  suffixIcon: Icon(
                     Icons.calendar_today,
-                    color: Color(0xFF999999),
+                    color: cs.onSurface.withValues(alpha: 0.4),
                   ),
                 ),
               ),
@@ -179,11 +187,14 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
           ),
           const SizedBox(height: 16),
           // Priority
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text(
               ' Priority',
-              style: TextStyle(fontSize: 14, color: Color(0xFF999999)),
+              style: TextStyle(
+                fontSize: 14,
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -203,9 +214,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
             height: 55,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
-                ),
+                gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: ElevatedButton(
@@ -246,11 +255,12 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
   }
 
   InputDecoration _inputDecoration(String hint) {
+    final cs = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFF999999)),
+      hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
       filled: true,
-      fillColor: const Color(0xFFF5F5F5),
+      fillColor: cs.surfaceContainerHighest,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,

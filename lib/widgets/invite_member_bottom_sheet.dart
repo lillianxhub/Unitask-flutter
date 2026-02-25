@@ -13,7 +13,7 @@ class InviteMemberBottomSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -95,6 +95,7 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
@@ -109,17 +110,17 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Invite member',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close, color: Colors.black),
+                child: Icon(Icons.close, color: cs.onSurface),
               ),
             ],
           ),
@@ -130,13 +131,14 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
             keyboardType: TextInputType.emailAddress,
             onChanged: _onSearchChanged,
             enabled: !_skipInvite,
+            style: TextStyle(color: cs.onSurface),
             decoration: InputDecoration(
               hintText: 'Enter email to invite',
-              hintStyle: const TextStyle(color: Color(0xFF999999)),
+              hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
               filled: true,
               fillColor: _skipInvite
-                  ? const Color(0xFFE0E0E0)
-                  : const Color(0xFFF5F5F5),
+                  ? cs.surfaceContainerHighest.withValues(alpha: 0.5)
+                  : cs.surfaceContainerHighest,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -151,11 +153,11 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: cs.onSurface.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -202,14 +204,15 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
               height: 55,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _selectedRole,
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                  icon: Icon(Icons.arrow_drop_down, color: cs.onSurface),
+                  style: TextStyle(color: cs.onSurface, fontSize: 16),
+                  dropdownColor: cs.surface,
                   onChanged: _skipInvite
                       ? null
                       : (String? newValue) {
@@ -227,8 +230,8 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
                             value,
                             style: TextStyle(
                               color: value == _selectedRole
-                                  ? Colors.black
-                                  : const Color(0xFF999999),
+                                  ? cs.onSurface
+                                  : cs.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                         );
@@ -266,9 +269,7 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
             height: 55,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
-                ),
+                gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: ElevatedButton(

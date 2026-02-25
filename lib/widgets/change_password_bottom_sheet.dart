@@ -9,7 +9,7 @@ class ChangePasswordBottomSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -121,17 +121,19 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
     TextEditingController controller,
     bool isPassword,
   ) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword,
+        style: TextStyle(color: cs.onSurface),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Color(0xFF999999)),
+          hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -144,6 +146,7 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
@@ -158,17 +161,17 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'เปลี่ยนรหัสผ่านใหม่',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close, color: Colors.black),
+                child: Icon(Icons.close, color: cs.onSurface),
               ),
             ],
           ),
@@ -192,9 +195,7 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
             height: 55,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
-                ),
+                gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: ElevatedButton(

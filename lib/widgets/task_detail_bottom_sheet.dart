@@ -34,9 +34,9 @@ class TaskDetailBottomSheet extends StatefulWidget {
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).bottomSheetTheme.backgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: TaskDetailBottomSheet(
             task: task,
@@ -72,6 +72,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -83,7 +84,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
               width: 50,
               height: 5,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: cs.onSurface.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -135,16 +136,26 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
             widget.task.description.isEmpty
                 ? 'No description'
                 : widget.task.description,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 16,
+              color: cs.onSurface.withValues(alpha: 0.5),
+            ),
           ),
           const SizedBox(height: 24),
           Row(
             children: [
-              const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+              Icon(
+                Icons.calendar_today,
+                size: 20,
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
               const SizedBox(width: 8),
               Text(
                 'Due Date: ${_formatDate(widget.task.dueDate)}',
-                style: const TextStyle(fontSize: 16, color: Colors.black54),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                ),
               ),
             ],
           ),
@@ -155,7 +166,10 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
           ),
           const SizedBox(height: 16),
           if (widget.task.comments.isEmpty)
-            const Text('No comments yet.', style: TextStyle(color: Colors.grey))
+            Text(
+              'No comments yet.',
+              style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+            )
           else
             ...widget.task.comments.map(
               (comment) => Padding(
@@ -207,10 +221,14 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                 Expanded(
                   child: TextField(
                     controller: _commentController,
+                    style: TextStyle(color: cs.onSurface),
                     decoration: InputDecoration(
                       hintText: 'Add a comment...',
+                      hintStyle: TextStyle(
+                        color: cs.onSurface.withValues(alpha: 0.4),
+                      ),
                       filled: true,
-                      fillColor: Colors.grey[100],
+                      fillColor: cs.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none,
@@ -232,7 +250,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                       FocusScope.of(context).unfocus();
                     }
                   },
-                  icon: const Icon(Icons.send, color: Color(0xFF6750A4)),
+                  icon: Icon(Icons.send, color: cs.primary),
                 ),
               ],
             ),
