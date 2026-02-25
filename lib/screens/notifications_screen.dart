@@ -7,8 +7,11 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -19,19 +22,16 @@ class NotificationsScreen extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(
-                      Icons.arrow_back_ios,
-                      color: Colors.black,
-                    ),
+                    child: Icon(Icons.arrow_back_ios, color: cs.onSurface),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Notifications',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -52,11 +52,11 @@ class NotificationsScreen extends StatelessWidget {
                       .toList();
 
                   if (pendingProjects.isEmpty && unreadNotifications.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'No new notifications.',
                         style: TextStyle(
-                          color: Color(0xFF888888),
+                          color: cs.onSurface.withValues(alpha: 0.5),
                           fontSize: 16,
                         ),
                       ),
@@ -67,14 +67,14 @@ class NotificationsScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     children: [
                       if (pendingProjects.isNotEmpty) ...[
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 12),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
                             'Invites',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: cs.onSurface,
                             ),
                           ),
                         ),
@@ -84,14 +84,14 @@ class NotificationsScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                       ],
                       if (unreadNotifications.isNotEmpty) ...[
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 12),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
                             'Comments',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: cs.onSurface,
                             ),
                           ),
                         ),
@@ -111,15 +111,16 @@ class NotificationsScreen extends StatelessWidget {
   }
 
   Widget _buildInviteCard(BuildContext context, dynamic project) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: cs.onSurface.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -130,27 +131,27 @@ class NotificationsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFCFBDF6),
-                child: Icon(Icons.group, color: Colors.white),
+              CircleAvatar(
+                backgroundColor: cs.secondary,
+                child: const Icon(Icons.group, color: Colors.white),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Project Invitation',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                     Text(
                       'You have been invited to join "${project.name}"',
-                      style: const TextStyle(
-                        color: Color(0xFF888888),
+                      style: TextStyle(
+                        color: cs.onSurface.withValues(alpha: 0.5),
                         fontSize: 14,
                       ),
                     ),
@@ -192,7 +193,7 @@ class NotificationsScreen extends StatelessWidget {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFCFBDF6),
+                  backgroundColor: cs.secondary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -214,6 +215,7 @@ class NotificationsScreen extends StatelessWidget {
   }
 
   Widget _buildNotificationCard(BuildContext context, AppNotification notif) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         context.read<ProjectManager>().markNotificationAsRead(notif.id);
@@ -227,11 +229,11 @@ class NotificationsScreen extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: cs.onSurface.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -241,7 +243,7 @@ class NotificationsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              backgroundColor: const Color(0xFFCFBDF6),
+              backgroundColor: cs.secondary,
               child: Text(
                 notif.senderName.isNotEmpty
                     ? notif.senderName[0].toUpperCase()
@@ -259,7 +261,7 @@ class NotificationsScreen extends StatelessWidget {
                 children: [
                   RichText(
                     text: TextSpan(
-                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                      style: TextStyle(fontSize: 14, color: cs.onSurface),
                       children: [
                         TextSpan(
                           text: notif.senderName,
@@ -280,8 +282,8 @@ class NotificationsScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '"${notif.text}"',
-                    style: const TextStyle(
-                      color: Color(0xFF888888),
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.5),
                       fontStyle: FontStyle.italic,
                     ),
                     maxLines: 2,

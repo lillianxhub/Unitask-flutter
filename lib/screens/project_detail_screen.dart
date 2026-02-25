@@ -195,10 +195,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   Expanded(
                                     child: Text(
                                       project.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black,
+                                        color: cs.onSurface,
                                       ),
                                     ),
                                   ),
@@ -250,9 +250,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 project.description,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Color(0xFF828282),
+                                  color: cs.onSurface.withValues(alpha: 0.6),
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -260,23 +260,27 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                 children: [
                                   Text(
                                     '$taskCount Task${taskCount == 1 ? '' : 's'}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF4F4F4F),
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.7,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  const Icon(
+                                  Icon(
                                     Icons.person_outline,
                                     size: 16,
-                                    color: Color(0xFF4F4F4F),
+                                    color: cs.onSurface.withValues(alpha: 0.7),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '$totalMembers member${totalMembers == 1 ? '' : 's'}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF4F4F4F),
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.7,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -286,18 +290,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Progress Bar',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF4F4F4F),
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.7,
+                                      ),
                                     ),
                                   ),
                                   Text(
                                     '$progress%',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF4F4F4F),
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.7,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -571,6 +579,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _buildDetailContent(BuildContext context, String projectName) {
+    final cs = Theme.of(context).colorScheme;
     return Consumer<ProjectManager>(
       builder: (context, manager, child) {
         final project = manager.projects.firstWhere(
@@ -589,12 +598,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Detail section
-              const Text(
+              Text(
                 'Detail',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -610,21 +619,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               _detailRow('สถานะ', project.status),
               const SizedBox(height: 32),
               // Comment section
-              const Text(
+              Text(
                 'Comment',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
               if (project.comments.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: Text(
                     'ยังไม่มีความคิดเห็น',
-                    style: TextStyle(color: Color(0xFF888888)),
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 )
               else
@@ -642,29 +653,37 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _detailRow(String label, String value) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: cs.onSurface,
           ),
         ),
-        Text(value, style: const TextStyle(fontSize: 16, color: Colors.black)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            color: cs.onSurface.withValues(alpha: 0.8),
+          ),
+        ),
       ],
     );
   }
 
   Widget _commentItem(Comment comment) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 18,
-          backgroundColor: const Color(0xFFCFBDF6),
+          backgroundColor: cs.secondary,
           child: Text(
             comment.authorName.isNotEmpty
                 ? comment.authorName[0].toUpperCase()
@@ -682,15 +701,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             children: [
               Text(
                 comment.authorName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 comment.text,
-                style: const TextStyle(color: Color(0xFF4F4F4F)),
+                style: TextStyle(color: cs.onSurface.withValues(alpha: 0.7)),
               ),
             ],
           ),
@@ -700,6 +719,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _buildTasksContent() {
+    final cs = Theme.of(context).colorScheme;
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final projectName = args?['name'] as String? ?? 'Mobile Project';
@@ -727,15 +747,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Tasks',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: cs.onSurface,
                     ),
                   ),
-                  const Icon(Icons.sort, color: Colors.black),
+                  Icon(Icons.sort, color: cs.onSurface),
                 ],
               ),
               const SizedBox(height: 16),
@@ -805,6 +825,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _buildTaskCard(Task task) {
+    final cs = Theme.of(context).colorScheme;
     String title = task.title;
     String subtitle = task.description.isEmpty
         ? 'No description'
@@ -856,10 +877,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: cs.onSurface,
                     ),
                   ),
                 ),
@@ -882,22 +903,25 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
+              style: TextStyle(
+                fontSize: 13,
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.calendar_today,
                   size: 14,
-                  color: Color(0xFF888888),
+                  color: cs.onSurface.withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF888888),
+                    color: cs.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
                 const Spacer(),
@@ -952,6 +976,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _buildMembersContent(BuildContext context, String projectName) {
+    final cs = Theme.of(context).colorScheme;
     return Consumer<ProjectManager>(
       builder: (context, manager, child) {
         final project = manager.projects.firstWhere(
@@ -974,12 +999,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Members',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: cs.onSurface,
                     ),
                   ),
                   if (canEdit)
@@ -999,15 +1024,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         );
                       },
                       child: Row(
-                        children: const [
-                          Icon(Icons.add, size: 16, color: Color(0xFF6750A4)),
-                          SizedBox(width: 4),
+                        children: [
+                          Icon(Icons.add, size: 16, color: cs.primary),
+                          const SizedBox(width: 4),
                           Text(
                             'Invite',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6750A4),
-                            ),
+                            style: TextStyle(fontSize: 14, color: cs.primary),
                           ),
                         ],
                       ),
@@ -1117,14 +1139,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     ValueChanged<String>? onRoleChanged,
     VoidCallback? onRemove,
   }) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: cs.onSurface.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -1135,8 +1158,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           CircleAvatar(
             radius: 22,
             backgroundColor: isOwner
-                ? const Color(0xFFCFBDF6)
-                : const Color(0xFF888888),
+                ? cs.secondary
+                : cs.onSurface.withValues(alpha: 0.3),
             child: const Icon(Icons.person, color: Colors.white),
           ),
           const SizedBox(width: 16),
@@ -1146,12 +1169,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: cs.onSurface,
                   ),
                 ),
-                Text(email, style: const TextStyle(color: Color(0xFF888888))),
+                Text(
+                  email,
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                ),
               ],
             ),
           ),
@@ -1161,21 +1187,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 height: 30,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0E6FA),
+                  color: cs.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: roleLabel,
-                    icon: const Icon(
+                    dropdownColor: cs.surface,
+                    icon: Icon(
                       Icons.arrow_drop_down,
                       size: 16,
-                      color: Color(0xFF6750A4),
+                      color: cs.primary,
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF6750A4),
+                      color: cs.primary,
                     ),
                     onChanged: (String? newValue) {
                       if (newValue != null &&
@@ -1202,15 +1229,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0E6FA),
+                  color: cs.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   roleLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF6750A4),
+                    color: cs.primary,
                   ),
                 ),
               ),
