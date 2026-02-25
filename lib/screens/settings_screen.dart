@@ -23,17 +23,18 @@ class SettingsScreen extends StatelessWidget {
         iconTheme: IconThemeData(color: cs.onSurface),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(24),
         children: [
-          Text(
-            'ความปลอดภัยบัญชี',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: cs.primary,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Text(
+              'ความปลอดภัยบัญชี',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: cs.primary,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
           _buildSettingsTile(
             context,
             icon: Icons.lock_outline,
@@ -42,16 +43,21 @@ class SettingsScreen extends StatelessWidget {
               ChangePasswordBottomSheet.show(context);
             },
           ),
-          Divider(height: 32, color: cs.outline),
-          Text(
-            'การตั้งค่าอื่นๆ',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: cs.primary,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Divider(height: 32, color: cs.outline),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Text(
+              'การตั้งค่าอื่นๆ',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: cs.primary,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
           Consumer<ThemeManager>(
             builder: (context, themeManager, _) {
               return _buildThemeToggleTile(context, themeManager);
@@ -75,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
   ) {
     final cs = Theme.of(context).colorScheme;
     return ListTile(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -114,7 +120,7 @@ class SettingsScreen extends StatelessWidget {
   }) {
     final cs = Theme.of(context).colorScheme;
     return ListTile(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(

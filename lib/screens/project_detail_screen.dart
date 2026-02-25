@@ -439,89 +439,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     // Tabs
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    Material(
+                      color: Colors.transparent,
                       child: Row(
                         children: [
-                          GestureDetector(
-                            onTap: () => setState(() => _tabIndex = 0),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Task',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: _tabIndex == 0
-                                        ? cs.primary
-                                        : cs.onSurface.withValues(alpha: 0.5),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Container(
-                                  width: 50,
-                                  height: 3,
-                                  color: _tabIndex == 0
-                                      ? cs.primary
-                                      : Colors.transparent,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                          GestureDetector(
-                            onTap: () => setState(() => _tabIndex = 1),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Detail',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: _tabIndex == 1
-                                        ? cs.primary
-                                        : cs.onSurface.withValues(alpha: 0.5),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Container(
-                                  width: 50,
-                                  height: 3,
-                                  color: _tabIndex == 1
-                                      ? cs.primary
-                                      : Colors.transparent,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                          GestureDetector(
-                            onTap: () => setState(() => _tabIndex = 2),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Members',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: _tabIndex == 2
-                                        ? cs.primary
-                                        : cs.onSurface.withValues(alpha: 0.5),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Container(
-                                  width: 50,
-                                  height: 3,
-                                  color: _tabIndex == 2
-                                      ? cs.primary
-                                      : Colors.transparent,
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildTabItem(0, 'Task', cs),
+                          _buildTabItem(1, 'Detail', cs),
+                          _buildTabItem(2, 'Members', cs),
                         ],
                       ),
                     ),
@@ -662,6 +588,42 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildTabItem(int index, String title, ColorScheme cs) {
+    final isActive = _tabIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _tabIndex = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isActive
+                      ? cs.primary
+                      : cs.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: isActive ? cs.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(1.5),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
