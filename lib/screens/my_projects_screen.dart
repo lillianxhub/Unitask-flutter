@@ -187,8 +187,8 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   Expanded(
                     child: Text(
                       project.name,
-                      style: TextStyle(
-                        fontSize: 20 * _s,
+                      style: const TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: cs.onSurface,
                       ),
@@ -241,14 +241,14 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                     children: [
                       Icon(
                         Icons.calendar_today,
-                        size: 16 * _s,
+                        size: 16,
                         color: Color(0xFF888888),
                       ),
                       SizedBox(width: 6 * _s),
                       Text(
                         'Due Date : ${project.dueDate}',
-                        style: TextStyle(
-                          fontSize: 12 * _s,
+                        style: const TextStyle(
+                          fontSize: 12,
                           color: Color(0xFF888888),
                         ),
                       ),
@@ -258,28 +258,28 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                     children: [
                       Icon(
                         Icons.chat_bubble_outline,
-                        size: 16 * _s,
+                        size: 16,
                         color: Color(0xFF888888),
                       ),
                       SizedBox(width: 4 * _s),
                       Text(
                         '${project.comments.length}',
-                        style: TextStyle(
-                          fontSize: 12 * _s,
+                        style: const TextStyle(
+                          fontSize: 12,
                           color: Color(0xFF888888),
                         ),
                       ),
-                      SizedBox(width: 12 * _s),
-                      Icon(
+                      const SizedBox(width: 12),
+                      const Icon(
                         Icons.attach_file,
-                        size: 16 * _s,
+                        size: 16,
                         color: Color(0xFF888888),
                       ),
                       SizedBox(width: 4 * _s),
                       Text(
                         '${project.tasks.length}',
-                        style: TextStyle(
-                          fontSize: 12 * _s,
+                        style: const TextStyle(
+                          fontSize: 12,
                           color: Color(0xFF888888),
                         ),
                       ),

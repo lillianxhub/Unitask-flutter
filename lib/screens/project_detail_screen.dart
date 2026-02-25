@@ -202,49 +202,160 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                       ),
                                     ),
                                   ),
-                                  if (project.ownerId ==
-                                          (FirebaseAuth
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value == 'complete') {
+                                        context
+                                            .read<ProjectManager>()
+                                            .updateProjectStatus(
+                                              project.name,
+                                              'Complete',
+                                            );
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: const Text(
+                                              'โปรเจคเสร็จสิ้นแล้ว ✅',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                          ),
+                                        );
+                                      } else if (value == 'reopen') {
+                                        context
+                                            .read<ProjectManager>()
+                                            .updateProjectStatus(
+                                              project.name,
+                                              'Doing',
+                                            );
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: const Text(
+                                              'เปิดโปรเจคใหม่แล้ว 🔄',
+                                            ),
+                                            backgroundColor: cs.primary,
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                          ),
+                                        );
+                                      } else if (value == 'delete') {
+                                        showDialog(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('ลบโปรเจค'),
+                                            content: Text(
+                                              'คุณแน่ใจหรือไม่ว่าต้องการลบ "${project.name}"?',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx),
+                                                child: const Text('ยกเลิก'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  context
+                                                      .read<ProjectManager>()
+                                                      .deleteProject(
+                                                        project.name,
+                                                      );
+                                                  Navigator.pop(ctx);
+                                                  Navigator.pushNamedAndRemoveUntil(
+                                                    context,
+                                                    '/home',
+                                                    (route) => false,
+                                                    arguments: {'tabIndex': 0},
+                                                  );
+                                                },
+                                                child: const Text(
+                                                  'ลบ',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (BuildContext context) {
+                                      final isOwner =
+                                          project.ownerId ==
+                                              (FirebaseAuth
+                                                      .instance
+                                                      .currentUser
+                                                      ?.uid ??
+                                                  'guest') ||
+                                          FirebaseAuth
                                                   .instance
                                                   .currentUser
-                                                  ?.uid ??
-                                              'guest') ||
-                                      FirebaseAuth
-                                              .instance
-                                              .currentUser
-                                              ?.email ==
-                                          project.ownerId)
-                                    PopupMenuButton<String>(
-                                      onSelected: (value) {
-                                        if (value == 'Delete') {
-                                          context
-                                              .read<ProjectManager>()
-                                              .deleteProject(project.name);
-                                          Navigator.pushNamedAndRemoveUntil(
-                                            context,
-                                            '/home',
-                                            (route) => false,
-                                            arguments: {'tabIndex': 0},
-                                          );
-                                        }
-                                      },
-                                      itemBuilder: (BuildContext context) {
-                                        return {'Delete'}.map((String choice) {
-                                          return PopupMenuItem<String>(
-                                            value: choice,
-                                            child: Text(
-                                              choice,
-                                              style: const TextStyle(
-                                                color: Colors.red,
-                                              ),
+                                                  ?.email ==
+                                              project.ownerId;
+                                      return [
+                                        if (project.status != 'Complete')
+                                          const PopupMenuItem<String>(
+                                            value: 'complete',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.check_circle_outline,
+                                                  color: Colors.green,
+                                                  size: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text('Mark as Complete'),
+                                              ],
                                             ),
-                                          );
-                                        }).toList();
-                                      },
-                                      icon: Icon(
-                                        Icons.more_vert,
-                                        color: cs.onSurface,
-                                      ),
+                                          )
+                                        else
+                                          const PopupMenuItem<String>(
+                                            value: 'reopen',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.refresh,
+                                                  color: Colors.orange,
+                                                  size: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text('Reopen Project'),
+                                              ],
+                                            ),
+                                          ),
+                                        if (isOwner)
+                                          const PopupMenuItem<String>(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.red,
+                                                  size: 20,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Delete Project',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                      ];
+                                    },
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      color: cs.onSurface,
                                     ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 8),
