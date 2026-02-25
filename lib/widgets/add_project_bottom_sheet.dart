@@ -88,144 +88,150 @@ class _AddProjectBottomSheetState extends State<AddProjectBottomSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 40,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Add New Project',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Icon(Icons.close, color: cs.onSurface),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          // Project name
-          TextField(
-            controller: _nameController,
-            style: TextStyle(color: cs.onSurface),
-            decoration: InputDecoration(
-              hintText: 'Enter project name',
-              hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
-              filled: true,
-              fillColor: cs.surfaceContainerHighest,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Description
-          TextField(
-            controller: _descController,
-            maxLines: 4,
-            style: TextStyle(color: cs.onSurface),
-            decoration: InputDecoration(
-              hintText: 'Enter description',
-              hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
-              filled: true,
-              fillColor: cs.surfaceContainerHighest,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.all(16),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Due date
-          GestureDetector(
-            onTap: _pickDate,
-            child: AbsorbPointer(
-              child: TextField(
-                controller: _dueDateController,
-                style: TextStyle(color: cs.onSurface),
-                decoration: InputDecoration(
-                  hintText: 'Enter due date',
-                  hintStyle: TextStyle(
-                    color: cs.onSurface.withValues(alpha: 0.4),
-                  ),
-                  filled: true,
-                  fillColor: cs.surfaceContainerHighest,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  suffixIcon: Icon(
-                    Icons.calendar_today,
-                    color: cs.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          // Save button
-          SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: ElevatedButton(
-                onPressed: () {
-                  final name = _nameController.text.trim();
-                  final desc = _descController.text.trim();
-                  final dueDate = _dueDateController.text.trim();
-
-                  if (name.isEmpty || desc.isEmpty || dueDate.isEmpty) {
-                    _showErrorDialog(
-                      'ข้อมูลไม่ครบถ้วน',
-                      'กรุณากรอกชื่อโปรเจกต์ รายละเอียด และกำหนดส่งให้ครบทุกช่อง',
-                    );
-                    return;
-                  }
-
-                  Navigator.pop(context);
-                  widget.onSave?.call(name, desc, dueDate);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Text(
-                  'Save',
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Add New Project',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(Icons.close, color: cs.onSurface),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Project name
+            TextField(
+              controller: _nameController,
+              style: TextStyle(color: cs.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Enter project name',
+                hintStyle: TextStyle(
+                  color: cs.onSurface.withValues(alpha: 0.4),
+                ),
+                filled: true,
+                fillColor: cs.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Description
+            TextField(
+              controller: _descController,
+              maxLines: 4,
+              style: TextStyle(color: cs.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Enter description',
+                hintStyle: TextStyle(
+                  color: cs.onSurface.withValues(alpha: 0.4),
+                ),
+                filled: true,
+                fillColor: cs.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Due date
+            GestureDetector(
+              onTap: _pickDate,
+              child: AbsorbPointer(
+                child: TextField(
+                  controller: _dueDateController,
+                  style: TextStyle(color: cs.onSurface),
+                  decoration: InputDecoration(
+                    hintText: 'Enter due date',
+                    hintStyle: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                    ),
+                    filled: true,
+                    fillColor: cs.surfaceContainerHighest,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    suffixIcon: Icon(
+                      Icons.calendar_today,
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 32),
+            // Save button
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    final name = _nameController.text.trim();
+                    final desc = _descController.text.trim();
+                    final dueDate = _dueDateController.text.trim();
+
+                    if (name.isEmpty || desc.isEmpty || dueDate.isEmpty) {
+                      _showErrorDialog(
+                        'ข้อมูลไม่ครบถ้วน',
+                        'กรุณากรอกชื่อโปรเจกต์ รายละเอียด และกำหนดส่งให้ครบทุกช่อง',
+                      );
+                      return;
+                    }
+
+                    Navigator.pop(context);
+                    widget.onSave?.call(name, desc, dueDate);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
