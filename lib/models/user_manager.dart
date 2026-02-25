@@ -99,6 +99,27 @@ class UserManager extends ChangeNotifier {
     }
   }
 
+  Future<String?> updateUserName(String newName) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return 'Not logged in';
+
+      await user.updateDisplayName(newName.trim());
+      await user.reload();
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'name': newName.trim()},
+      );
+
+      _name = newName.trim();
+      notifyListeners();
+      return null;
+    } catch (e) {
+      if (kDebugMode) print('Error updating user name: $e');
+      return 'Failed to update name';
+    }
+  }
+
   bool _isGoogleSignInInitialized = false;
 
   Future<String?> signInWithGoogle() async {
@@ -169,5 +190,52 @@ class UserManager extends ChangeNotifier {
     }
     if (role != null) _role = role;
     notifyListeners();
+  }
+
+  Future<String?> updatePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return 'Please log in first.';
+
+      // Check if user is signed in with Google
+      bool isGoogleSignIn = false;
+      for (var userInfo in user.providerData) {
+        if (userInfo.providerId == 'google.com') {
+          isGoogleSignIn = true;
+          break;
+        }
+      }
+
+      if (isGoogleSignIn) {
+        return 'บัญชีนี้เข้าสู่ระบบด้วย Google ไม่สามารถเปลี่ยนรหัสผ่านในแอปได้ กรุณาเปลี่ยนรหัสผ่านที่หน้าตั้งค่าบัญชี Google ของท่าน';
+      }
+
+      // Re-authenticate before changing password
+      final email = user.email;
+      if (email == null) return 'No email associated with this account.';
+
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Successfully re-authenticated, now update password
+      await user.updatePassword(newPassword);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) print('Firebase Auth Error: ${e.code}');
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        return 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
+      }
+      return e.message ?? 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+    } catch (e) {
+      if (kDebugMode) print('Error updating password: $e');
+      return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+    }
   }
 }

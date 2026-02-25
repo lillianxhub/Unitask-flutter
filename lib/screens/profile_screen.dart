@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
 import '../models/project_manager.dart';
+import '../widgets/edit_profile_bottom_sheet.dart';
+import '../widgets/change_password_bottom_sheet.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -131,17 +133,23 @@ class ProfileScreen extends StatelessWidget {
                       _buildMenuItem(
                         Icons.edit_outlined,
                         'แก้ไขข้อมูลส่วนตัว',
-                        onTap: () {},
+                        onTap: () {
+                          EditProfileBottomSheet.show(context);
+                        },
                       ),
                       _buildMenuItem(
                         Icons.settings_outlined,
                         'ตั้งค่าบัญชี',
-                        onTap: () {},
+                        onTap: () {
+                          ChangePasswordBottomSheet.show(context);
+                        },
                       ),
                       _buildMenuItem(
                         Icons.notifications_outlined,
                         'การแจ้งเตือน',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, '/notifications');
+                        },
                       ),
 
                       const SizedBox(height: 20),

@@ -31,6 +31,36 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  void _showErrorDialog(String title, String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFF8A80),
+          ),
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'ตกลง',
+              style: TextStyle(
+                color: Color(0xFF6750A4),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -140,18 +170,16 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
                         final confirmPassword = _confirmPasswordController.text;
 
                         if (name.isEmpty || email.isEmpty || password.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please fill all fields'),
-                            ),
+                          _showErrorDialog(
+                            'ข้อมูลไม่ครบถ้วน',
+                            'กรุณากรอกข้อมูลให้ครบทุกช่อง',
                           );
                           return;
                         }
                         if (password != confirmPassword) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Passwords do not match'),
-                            ),
+                          _showErrorDialog(
+                            'รหัสผ่านไม่ตรงกัน',
+                            'กรุณายืนยันรหัสผ่านให้ตรงกัน',
                           );
                           return;
                         }
@@ -172,9 +200,7 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
                             arguments: 'HOME',
                           );
                         } else {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text(error)));
+                          _showErrorDialog('สมัครสมาชิกไม่สำเร็จ', error);
                         }
                       },
                 style: ElevatedButton.styleFrom(

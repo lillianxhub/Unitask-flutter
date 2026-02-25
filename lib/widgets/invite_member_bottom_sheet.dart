@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InviteMemberBottomSheet extends StatefulWidget {
-  final void Function(String email, String role)? onInvite;
+  final void Function(String? email, String role)? onInvite;
 
   const InviteMemberBottomSheet({super.key, this.onInvite});
 
   static void show(
     BuildContext context, {
-    void Function(String email, String role)? onInvite,
+    void Function(String? email, String role)? onInvite,
   }) {
     showModalBottomSheet(
       context: context,
@@ -30,6 +30,37 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
   final _emailController = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
   String _selectedRole = 'Editor';
+  bool _skipInvite = false;
+
+  void _showErrorDialog(String title, String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFF8A80),
+          ),
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'ตกลง',
+              style: TextStyle(
+                color: Color(0xFF6750A4),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -98,11 +129,14 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             onChanged: _onSearchChanged,
+            enabled: !_skipInvite,
             decoration: InputDecoration(
-              hintText: 'Enter Email',
+              hintText: 'Enter email to invite',
               hintStyle: const TextStyle(color: Color(0xFF999999)),
               filled: true,
-              fillColor: const Color(0xFFF5F5F5),
+              fillColor: _skipInvite
+                  ? const Color(0xFFE0E0E0)
+                  : const Color(0xFFF5F5F5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -161,43 +195,69 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
           ],
           const SizedBox(height: 16),
           // Role dropdown
-          Container(
-            width: double.infinity,
-            height: 55,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedRole,
-                icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
-                style: const TextStyle(color: Colors.black, fontSize: 16),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedRole = newValue;
-                    });
-                  }
-                },
-                items: <String>['Editor', 'Viewer']
-                    .map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: TextStyle(
-                            color: value == _selectedRole
-                                ? Colors.black
-                                : const Color(0xFF999999),
+          Opacity(
+            opacity: _skipInvite ? 0.5 : 1.0,
+            child: Container(
+              width: double.infinity,
+              height: 55,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedRole,
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                  onChanged: _skipInvite
+                      ? null
+                      : (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedRole = newValue;
+                            });
+                          }
+                        },
+                  items: <String>['Editor', 'Viewer']
+                      .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            value,
+                            style: TextStyle(
+                              color: value == _selectedRole
+                                  ? Colors.black
+                                  : const Color(0xFF999999),
+                            ),
                           ),
-                        ),
-                      );
-                    })
-                    .toList(),
+                        );
+                      })
+                      .toList(),
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          // Skip Checkbox
+          CheckboxListTile(
+            title: const Text(
+              'ยังไม่เชิญใครในตอนนี้',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            value: _skipInvite,
+            activeColor: const Color(0xFF6750A4),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            onChanged: (bool? value) {
+              setState(() {
+                _skipInvite = value ?? false;
+                if (_skipInvite) {
+                  _emailController.clear();
+                  _searchResults.clear();
+                }
+              });
+            },
           ),
           const SizedBox(height: 32),
           // Invite button
@@ -214,8 +274,20 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
               child: ElevatedButton(
                 onPressed: () {
                   final email = _emailController.text.trim();
+
+                  if (!_skipInvite && email.isEmpty) {
+                    _showErrorDialog(
+                      'ข้อมูลไม่ครบถ้วน',
+                      'กรุณาระบุอีเมลที่ต้องการเชิญ หรือกดติ๊ก "ยังไม่เชิญใครในตอนนี้"',
+                    );
+                    return;
+                  }
+
                   Navigator.pop(context);
-                  widget.onInvite?.call(email, _selectedRole);
+                  widget.onInvite?.call(
+                    _skipInvite ? null : email,
+                    _selectedRole,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
