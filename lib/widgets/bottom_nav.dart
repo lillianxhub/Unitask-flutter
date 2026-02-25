@@ -11,7 +11,7 @@ class BottomNav extends StatelessWidget {
     final theme = Theme.of(context);
     return BottomNavigationBar(
       backgroundColor: theme.bottomNavigationBarTheme.backgroundColor,
-      elevation: 8,
+      elevation: 0,
       currentIndex: currentIndex,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
