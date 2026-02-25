@@ -5,12 +5,14 @@ class MembersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final memberEmail = args?['email'] as String? ?? 'member@gmail.com';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -21,19 +23,16 @@ class MembersScreen extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(
-                      Icons.arrow_back_ios,
-                      color: Colors.black,
-                    ),
+                    child: Icon(Icons.arrow_back_ios, color: cs.onSurface),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Members',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -49,6 +48,7 @@ class MembersScreen extends StatelessWidget {
                   children: [
                     // Admin
                     _memberCard(
+                      context,
                       name: 'You (Owner)',
                       email: 'admin@unitask.com',
                       isOwner: true,
@@ -56,6 +56,7 @@ class MembersScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     // Invited member
                     _memberCard(
+                      context,
                       name: 'Invited Member',
                       email: memberEmail,
                       role: 'Editor',
@@ -72,8 +73,8 @@ class MembersScreen extends StatelessWidget {
                 height: 55,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
+                    gradient: LinearGradient(
+                      colors: [cs.secondary, cs.tertiary],
                     ),
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -104,20 +105,22 @@ class MembersScreen extends StatelessWidget {
     );
   }
 
-  Widget _memberCard({
+  Widget _memberCard(
+    BuildContext context, {
     required String name,
     required String email,
     bool isOwner = false,
     String? role,
   }) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: cs.onSurface.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -128,8 +131,8 @@ class MembersScreen extends StatelessWidget {
           CircleAvatar(
             radius: 22,
             backgroundColor: isOwner
-                ? const Color(0xFFCFBDF6)
-                : const Color(0xFF888888),
+                ? cs.secondary
+                : cs.onSurface.withValues(alpha: 0.3),
             child: const Icon(Icons.person, color: Colors.white),
           ),
           const SizedBox(width: 16),
@@ -139,12 +142,15 @@ class MembersScreen extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: cs.onSurface,
                   ),
                 ),
-                Text(email, style: const TextStyle(color: Color(0xFF888888))),
+                Text(
+                  email,
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                ),
               ],
             ),
           ),
@@ -152,12 +158,12 @@ class MembersScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
+                color: cs.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 role,
-                style: const TextStyle(fontSize: 12, color: Color(0xFFCFBDF6)),
+                style: TextStyle(fontSize: 12, color: cs.primary),
               ),
             ),
         ],

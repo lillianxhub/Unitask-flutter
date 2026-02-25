@@ -9,7 +9,7 @@ class RegisterBottomSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -72,6 +72,7 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
@@ -88,22 +89,25 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
             height: 4,
             margin: const EdgeInsets.only(bottom: 24),
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
+              color: cs.onSurface.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const Text(
+          Text(
             'Welcome to Unitask',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
+              color: cs.onSurface,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Let's work",
-            style: TextStyle(fontSize: 16, color: Color(0xFF1A1A1A)),
+            style: TextStyle(
+              fontSize: 16,
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -155,9 +159,7 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
             height: 55,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
-                ),
+                gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: ElevatedButton(
@@ -243,15 +245,17 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
     TextInputType? inputType,
     TextEditingController? controller,
   }) {
+    final cs = Theme.of(context).colorScheme;
     return TextField(
       controller: controller,
       obscureText: obscure,
       keyboardType: inputType,
+      style: TextStyle(color: cs.onSurface),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF999999)),
+        hintStyle: TextStyle(color: cs.onSurface.withValues(alpha: 0.4)),
         filled: true,
-        fillColor: const Color(0xFFF5F5F5),
+        fillColor: cs.surfaceContainerHighest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -266,7 +270,7 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
                   obscure
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: const Color(0xFF999999),
+                  color: cs.onSurface.withValues(alpha: 0.4),
                 ),
                 onPressed: onToggleVisibility,
               )
