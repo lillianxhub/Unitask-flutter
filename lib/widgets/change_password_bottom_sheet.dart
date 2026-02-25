@@ -152,75 +152,77 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 40,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'เปลี่ยนรหัสผ่านใหม่',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Icon(Icons.close, color: cs.onSurface),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildTextField('รหัสผ่านเดิม', _currentPasswordController, true),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)',
-            _newPasswordController,
-            true,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            'ยืนยันรหัสผ่านใหม่',
-            _confirmPasswordController,
-            true,
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _updatePassword,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'เปลี่ยนรหัสผ่านใหม่',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'บันทึก',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(Icons.close, color: cs.onSurface),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildTextField('รหัสผ่านเดิม', _currentPasswordController, true),
+            const SizedBox(height: 16),
+            _buildTextField(
+              'รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)',
+              _newPasswordController,
+              true,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              'ยืนยันรหัสผ่านใหม่',
+              _confirmPasswordController,
+              true,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _updatePassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'บันทึก',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

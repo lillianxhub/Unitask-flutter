@@ -78,161 +78,166 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 24),
-            decoration: BoxDecoration(
-              color: cs.onSurface.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Text(
-            'Welcome to Unitask',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: cs.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Let's work",
-            style: TextStyle(
-              fontSize: 16,
-              color: cs.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Name
-          _buildField('Enter Name', controller: _nameController),
-          const SizedBox(height: 16),
-
-          // Email
-          _buildField(
-            'Enter Email',
-            inputType: TextInputType.emailAddress,
-            controller: _emailController,
-          ),
-          const SizedBox(height: 16),
-
-          // Password
-          _buildField(
-            'Enter Password',
-            controller: _passwordController,
-            obscure: _obscurePassword,
-            isPasswordField: true,
-            inputType: TextInputType.visiblePassword,
-            onToggleVisibility: () {
-              setState(() {
-                _obscurePassword = !_obscurePassword;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Confirm Password
-          _buildField(
-            'Confirm Password',
-            controller: _confirmPasswordController,
-            obscure: _obscureConfirmPassword,
-            isPasswordField: true,
-            inputType: TextInputType.visiblePassword,
-            onToggleVisibility: () {
-              setState(() {
-                _obscureConfirmPassword = !_obscureConfirmPassword;
-              });
-            },
-          ),
-          const SizedBox(height: 32),
-
-          // Register button
-          SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: DecoratedBox(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        final name = _nameController.text.trim();
-                        final email = _emailController.text.trim();
-                        final password = _passwordController.text;
-                        final confirmPassword = _confirmPasswordController.text;
-
-                        if (name.isEmpty || email.isEmpty || password.isEmpty) {
-                          _showErrorDialog(
-                            'ข้อมูลไม่ครบถ้วน',
-                            'กรุณากรอกข้อมูลให้ครบทุกช่อง',
-                          );
-                          return;
-                        }
-                        if (password != confirmPassword) {
-                          _showErrorDialog(
-                            'รหัสผ่านไม่ตรงกัน',
-                            'กรุณายืนยันรหัสผ่านให้ตรงกัน',
-                          );
-                          return;
-                        }
-
-                        setState(() => _isLoading = true);
-                        final error = await context
-                            .read<UserManager>()
-                            .register(name, email, password);
-                        if (!mounted) return;
-                        setState(() => _isLoading = false);
-
-                        if (error == null) {
-                          Navigator.pop(context);
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/splash',
-                            (route) => false,
-                            arguments: 'HOME',
-                          );
-                        } else {
-                          _showErrorDialog('สมัครสมาชิกไม่สำเร็จ', error);
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text(
-                        'Register',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                color: cs.onSurface.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-        ],
+            Text(
+              'Welcome to Unitask',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Let's work",
+              style: TextStyle(
+                fontSize: 16,
+                color: cs.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Name
+            _buildField('Enter Name', controller: _nameController),
+            const SizedBox(height: 16),
+
+            // Email
+            _buildField(
+              'Enter Email',
+              inputType: TextInputType.emailAddress,
+              controller: _emailController,
+            ),
+            const SizedBox(height: 16),
+
+            // Password
+            _buildField(
+              'Enter Password',
+              controller: _passwordController,
+              obscure: _obscurePassword,
+              isPasswordField: true,
+              inputType: TextInputType.visiblePassword,
+              onToggleVisibility: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Confirm Password
+            _buildField(
+              'Confirm Password',
+              controller: _confirmPasswordController,
+              obscure: _obscureConfirmPassword,
+              isPasswordField: true,
+              inputType: TextInputType.visiblePassword,
+              onToggleVisibility: () {
+                setState(() {
+                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                });
+              },
+            ),
+            const SizedBox(height: 32),
+
+            // Register button
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          final name = _nameController.text.trim();
+                          final email = _emailController.text.trim();
+                          final password = _passwordController.text;
+                          final confirmPassword =
+                              _confirmPasswordController.text;
+
+                          if (name.isEmpty ||
+                              email.isEmpty ||
+                              password.isEmpty) {
+                            _showErrorDialog(
+                              'ข้อมูลไม่ครบถ้วน',
+                              'กรุณากรอกข้อมูลให้ครบทุกช่อง',
+                            );
+                            return;
+                          }
+                          if (password != confirmPassword) {
+                            _showErrorDialog(
+                              'รหัสผ่านไม่ตรงกัน',
+                              'กรุณายืนยันรหัสผ่านให้ตรงกัน',
+                            );
+                            return;
+                          }
+
+                          setState(() => _isLoading = true);
+                          final error = await context
+                              .read<UserManager>()
+                              .register(name, email, password);
+                          if (!mounted) return;
+                          setState(() => _isLoading = false);
+
+                          if (error == null) {
+                            Navigator.pop(context);
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/splash',
+                              (route) => false,
+                              arguments: 'HOME',
+                            );
+                          } else {
+                            _showErrorDialog('สมัครสมาชิกไม่สำเร็จ', error);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Register',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
