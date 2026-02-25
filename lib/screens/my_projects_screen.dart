@@ -13,11 +13,13 @@ class MyProjectsScreen extends StatefulWidget {
 class _MyProjectsScreenState extends State<MyProjectsScreen> {
   int _selectedFilter = 0;
   final List<String> _filters = ['All', 'Doing', 'Complete', 'Out of Date'];
+  double _s = 1.0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    _s = (MediaQuery.of(context).size.width / 375).clamp(0.8, 1.4).toDouble();
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -25,57 +27,60 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Padding(
-              padding: EdgeInsets.only(left: 24, top: 24),
+            Padding(
+              padding: EdgeInsets.only(left: 24 * _s, top: 24 * _s),
               child: Text(
                 'My Project',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 28 * _s,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16 * _s),
             // Filter chips
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: _filters.length,
-                separatorBuilder: (_, index2) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 18 * _s),
+              child: Row(
+                children: List.generate(_filters.length, (index) {
                   final isSelected = _selectedFilter == index;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedFilter = index),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? cs.primary
-                            : cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _filters[index],
-                        style: TextStyle(
-                          fontSize: 14,
+                  return Padding(
+                    padding: EdgeInsets.only(right: 8 * _s),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedFilter = index),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20 * _s,
+                          vertical: 8 * _s,
+                        ),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? cs.onPrimary
-                              : cs.onSurface.withValues(alpha: 0.7),
+                              ? cs.primary
+                              : cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          _filters[index],
+                          style: TextStyle(
+                            fontSize: 14 * _s,
+                            color: isSelected
+                                ? cs.onPrimary
+                                : cs.onSurface.withValues(alpha: 0.7),
+                          ),
                         ),
                       ),
                     ),
                   );
-                },
+                }),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16 * _s),
             Divider(height: 1, color: cs.outline),
             // Project list
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 10 * _s),
                 child: Consumer<ProjectManager>(
                   builder: (context, manager, child) {
                     // Apply simple filtering if needed based on _selectedFilter
@@ -139,7 +144,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 12 * _s, vertical: 4 * _s),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
@@ -147,7 +152,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
       child: Text(
         status,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 12 * _s,
           fontWeight: FontWeight.bold,
           color: textColor,
         ),
@@ -169,10 +174,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         color: cs.surface,
         surfaceTintColor: cs.surface,
         elevation: 4,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        margin: EdgeInsets.symmetric(horizontal: 20 * _s, vertical: 10 * _s),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20 * _s),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -182,22 +187,26 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   Expanded(
                     child: Text(
                       project.name,
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: TextStyle(
+                        fontSize: 20 * _s,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 20, color: cs.onSurface),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 20 * _s,
+                    color: cs.onSurface,
+                  ),
                 ],
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4 * _s),
               Text(
                 project.description,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                style: TextStyle(fontSize: 14 * _s, color: Color(0xFF888888)),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * _s),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -205,41 +214,41 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   Text(
                     '${project.progress}%',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 14 * _s,
                       fontWeight: FontWeight.bold,
                       color: cs.primary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * _s),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: project.progress / 100,
                   backgroundColor: cs.outline,
                   valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
-                  minHeight: 8,
+                  minHeight: 8 * _s,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16 * _s),
               Divider(height: 1, color: cs.outline),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * _s),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today,
-                        size: 16,
+                        size: 16 * _s,
                         color: Color(0xFF888888),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6 * _s),
                       Text(
                         'Due Date : ${project.dueDate}',
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: TextStyle(
+                          fontSize: 12 * _s,
                           color: Color(0xFF888888),
                         ),
                       ),
@@ -247,30 +256,30 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   ),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.chat_bubble_outline,
-                        size: 16,
+                        size: 16 * _s,
                         color: Color(0xFF888888),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4 * _s),
                       Text(
                         '${project.comments.length}',
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: TextStyle(
+                          fontSize: 12 * _s,
                           color: Color(0xFF888888),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Icon(
+                      SizedBox(width: 12 * _s),
+                      Icon(
                         Icons.attach_file,
-                        size: 16,
+                        size: 16 * _s,
                         color: Color(0xFF888888),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4 * _s),
                       Text(
                         '${project.tasks.length}',
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: TextStyle(
+                          fontSize: 12 * _s,
                           color: Color(0xFF888888),
                         ),
                       ),
