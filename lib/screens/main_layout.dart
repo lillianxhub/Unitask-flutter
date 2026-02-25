@@ -40,6 +40,7 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(index: _selectedIndex, children: _pages),
 
       bottomNavigationBar: BottomNav(

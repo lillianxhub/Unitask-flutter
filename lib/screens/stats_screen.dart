@@ -7,8 +7,10 @@ class StatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -19,24 +21,27 @@ class StatsScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'สรุปผลและสถิติ',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: cs.onSurface,
                     ),
                   ),
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(Icons.more_vert, color: Colors.black),
+                    icon: Icon(Icons.more_vert, color: cs.onSurface),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 'ภาพรวมการทำงานของคุณ',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -51,34 +56,36 @@ class StatsScreen extends StatelessWidget {
                           height: 140,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFCFBDF6), // Purple shade
+                            color: cs.secondary,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.trending_up,
                                 size: 32,
-                                color: Colors.black,
+                                color: cs.onPrimary,
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     '${manager.successRate}%',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: cs.onPrimary,
                                     ),
                                   ),
                                   Text(
                                     'อัตราความสำเร็จ',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.black.withOpacity(0.6),
+                                      color: cs.onPrimary.withValues(
+                                        alpha: 0.6,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -94,34 +101,36 @@ class StatsScreen extends StatelessWidget {
                           height: 140,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFC7C6), // Pink shade
+                            color: cs.tertiary,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.check_circle_outline,
                                 size: 32,
-                                color: Colors.black,
+                                color: cs.onPrimary,
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     '${manager.completedTasksCount}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: cs.onPrimary,
                                     ),
                                   ),
                                   Text(
                                     'งานที่เสร็จสิ้น',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.black.withOpacity(0.6),
+                                      color: cs.onPrimary.withValues(
+                                        alpha: 0.6,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -137,12 +146,12 @@ class StatsScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Project Progress
-              const Text(
+              Text(
                 'ความคืบหน้าของโครงงาน',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -164,17 +173,17 @@ class StatsScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   project.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
-                                    color: Color(0xFF888888),
+                                    color: cs.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
                                 Text(
                                   '${project.progress} %',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Color(0xFF888888),
+                                    color: cs.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
                               ],
@@ -185,7 +194,7 @@ class StatsScreen extends StatelessWidget {
                               child: LinearProgressIndicator(
                                 value: project.progress / 100,
                                 minHeight: 8,
-                                backgroundColor: const Color(0xFFEEEEEE),
+                                backgroundColor: cs.outline,
                                 color: _getProjectColor(
                                   projects.indexOf(project),
                                 ),
@@ -201,12 +210,12 @@ class StatsScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Weekly Stats
-              const Text(
+              Text(
                 'สถิติรายสัปดาห์',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 24),
@@ -219,7 +228,7 @@ class StatsScreen extends StatelessWidget {
                       _buildStatItem(
                         '${stats['created']}',
                         'งานที่สร้าง',
-                        Colors.black,
+                        cs.onSurface,
                       ),
                       _buildStatItem(
                         '${stats['completed']}',
@@ -284,7 +293,7 @@ class StatsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
+            style: TextStyle(fontSize: 14, color: color.withValues(alpha: 0.6)),
           ),
         ],
       ),

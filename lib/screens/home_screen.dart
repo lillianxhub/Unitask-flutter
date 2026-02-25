@@ -61,8 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -103,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader() {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
@@ -111,21 +113,21 @@ class _HomeScreenState extends State<HomeScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'UniTask',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: cs.onSurface,
                 ),
               ),
               Consumer<UserManager>(
                 builder: (context, user, child) {
                   return Text(
                     'สวัสดี, ${user.name}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF6750A4),
+                      color: cs.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   );
@@ -146,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Navigator.pushNamed(context, '/notifications');
                     },
-                    color: Colors.black,
+                    color: cs.onSurface,
                   ),
                   if (hasNotifications)
                     Positioned(
@@ -174,32 +176,37 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSearchBar() {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surface,
           borderRadius: BorderRadius.circular(25),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: cs.onSurface.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           children: [
-            SizedBox(width: 16),
-            Icon(Icons.search, color: Color(0xFFBDBDBD)),
-            SizedBox(width: 12),
+            const SizedBox(width: 16),
+            Icon(Icons.search, color: cs.onSurface.withValues(alpha: 0.4)),
+            const SizedBox(width: 12),
             Expanded(
               child: TextField(
+                style: TextStyle(color: cs.onSurface),
                 decoration: InputDecoration(
                   hintText: 'Search',
-                  hintStyle: TextStyle(color: Color(0xFFBDBDBD)),
+                  hintStyle: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.4),
+                  ),
                   border: InputBorder.none,
+                  filled: false,
                 ),
               ),
             ),
@@ -210,12 +217,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDueDateHeader() {
-    return const Text(
+    final cs = Theme.of(context).colorScheme;
+    return Text(
       'Upcoming',
       style: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.bold,
-        color: Colors.black,
+        color: cs.onSurface,
       ),
     );
   }
@@ -240,23 +248,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (allTasks.isEmpty) {
       // Empty State
+      final cs = Theme.of(context).colorScheme;
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 30),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFEEEEEE)),
+          border: Border.all(color: cs.outline),
         ),
         child: Column(
-          children: const [
-            Icon(Icons.coffee_outlined, size: 48, color: Color(0xFFBDBDBD)),
-            SizedBox(height: 12),
+          children: [
+            Icon(
+              Icons.coffee_outlined,
+              size: 48,
+              color: cs.onSurface.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 12),
             Text(
               'ตอนนี้ไม่มีงานด่วน ไปพักผ่อนได้เลย!',
               style: TextStyle(
                 fontSize: 16,
-                color: Color(0xFF888888),
+                color: cs.onSurface.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -389,18 +402,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProjectSectionHeader() {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           'Project',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
         ),
         GestureDetector(
           onTap: () => Navigator.pushNamed(context, '/my-projects'),
-          child: const Text(
+          child: Text(
             'See All',
-            style: TextStyle(fontSize: 16, color: Color(0xFF6750A4)),
+            style: TextStyle(fontSize: 16, color: cs.primary),
           ),
         ),
       ],
@@ -459,8 +477,8 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       child: Card(
-        color: Colors.white,
-        surfaceTintColor: Colors.white,
+        color: Theme.of(context).cardTheme.color,
+        surfaceTintColor: Theme.of(context).cardTheme.color,
         elevation: 4,
         margin: const EdgeInsets.symmetric(vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -496,10 +514,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildStatusPill(project.status),
                   Text(
                     '${project.progress}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF6750A4),
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],
@@ -509,15 +527,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: project.progress / 100,
-                  backgroundColor: const Color(0xFFEEEEEE),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF6750A4),
+                  backgroundColor: Theme.of(context).colorScheme.outline,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary,
                   ),
                   minHeight: 8,
                 ),
               ),
               const SizedBox(height: 16),
-              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              Divider(height: 1, color: Theme.of(context).colorScheme.outline),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -582,17 +600,16 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- Floating Action Button ---
 
   Widget _buildFAB() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: 65,
       height: 65,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
-        ),
+        gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFCFBDF6).withOpacity(0.5),
+            color: cs.secondary.withValues(alpha: 0.5),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

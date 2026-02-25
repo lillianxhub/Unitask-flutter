@@ -130,8 +130,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final projectName = args?['name'] as String? ?? 'Mobile Project';
 
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -142,16 +145,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back_ios,
                       size: 24,
-                      color: Color(0xFF828282),
+                      color: cs.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Back',
-                    style: TextStyle(fontSize: 16, color: Color(0xFF828282)),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 ],
               ),
@@ -234,9 +240,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                           );
                                         }).toList();
                                       },
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.more_vert,
-                                        color: Colors.black,
+                                        color: cs.onSurface,
                                       ),
                                     ),
                                 ],
@@ -301,11 +307,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                 borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: progress / 100,
-                                  backgroundColor: const Color(0xFFE0E0E0),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                        Color(0xFFCFBDF6),
-                                      ),
+                                  backgroundColor: cs.outline,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    cs.secondary,
+                                  ),
                                   minHeight: 8,
                                 ),
                               ),
@@ -330,8 +335,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: _tabIndex == 0
-                                        ? const Color(0xFF6750A4)
-                                        : const Color(0xFF828282),
+                                        ? cs.primary
+                                        : cs.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -339,7 +344,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   width: 50,
                                   height: 3,
                                   color: _tabIndex == 0
-                                      ? const Color(0xFF6750A4)
+                                      ? cs.primary
                                       : Colors.transparent,
                                 ),
                               ],
@@ -356,8 +361,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: _tabIndex == 1
-                                        ? const Color(0xFF6750A4)
-                                        : const Color(0xFF828282),
+                                        ? cs.primary
+                                        : cs.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -365,7 +370,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   width: 50,
                                   height: 3,
                                   color: _tabIndex == 1
-                                      ? const Color(0xFF6750A4)
+                                      ? cs.primary
                                       : Colors.transparent,
                                 ),
                               ],
@@ -382,8 +387,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: _tabIndex == 2
-                                        ? const Color(0xFF6750A4)
-                                        : const Color(0xFF828282),
+                                        ? cs.primary
+                                        : cs.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -391,7 +396,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   width: 50,
                                   height: 3,
                                   color: _tabIndex == 2
-                                      ? const Color(0xFF6750A4)
+                                      ? cs.primary
                                       : Colors.transparent,
                                 ),
                               ],
@@ -400,7 +405,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         ],
                       ),
                     ),
-                    const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                    Divider(height: 1, color: cs.outline),
                     // Tab content
                     if (_tabIndex == 0)
                       _buildTasksContent()
@@ -417,10 +422,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cs.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: cs.onSurface.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, -2),
                     ),
@@ -428,14 +433,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.edit, color: Color(0xFF828282), size: 32),
+                    Icon(
+                      Icons.edit,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                      size: 32,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
                         controller: _commentController,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: cs.onSurface),
+                        decoration: InputDecoration(
                           hintText: 'เขียนความคิดเห็น...',
-                          hintStyle: TextStyle(color: Color(0xFFBDBDBD)),
+                          hintStyle: TextStyle(
+                            color: cs.onSurface.withValues(alpha: 0.3),
+                          ),
                           border: InputBorder.none,
                         ),
                       ),
@@ -472,8 +484,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         width: 45,
                         height: 45,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
+                          gradient: LinearGradient(
+                            colors: [cs.secondary, cs.tertiary],
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
