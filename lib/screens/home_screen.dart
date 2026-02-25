@@ -415,7 +415,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         GestureDetector(
-          onTap: () => Navigator.pushNamed(context, '/my-projects'),
+          onTap: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/home',
+              (route) => false,
+              arguments: {'tabIndex': 1},
+            );
+          },
           child: Text(
             'See All',
             style: TextStyle(fontSize: 16, color: cs.primary),
