@@ -18,9 +18,9 @@ class BottomNav extends StatelessWidget {
       selectedItemColor: theme.bottomNavigationBarTheme.selectedItemColor,
       unselectedItemColor: theme.bottomNavigationBarTheme.unselectedItemColor,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.task_alt_outlined),
+          icon: Icon(Icons.task_alt_rounded),
           label: 'Projects',
         ),
         BottomNavigationBarItem(
