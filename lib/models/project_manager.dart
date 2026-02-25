@@ -286,6 +286,44 @@ class ProjectManager extends ChangeNotifier {
     }
   }
 
+  Future<void> updateProjectStatus(String projectName, String newStatus) async {
+    if (_userId == null) {
+      // Guest mode: update in-memory
+      final index = _projects.indexWhere((p) => p.name == projectName);
+      if (index != -1) {
+        final old = _projects[index];
+        _projects[index] = Project(
+          id: old.id,
+          name: old.name,
+          description: old.description,
+          dueDate: old.dueDate,
+          ownerId: old.ownerId,
+          ownerName: old.ownerName,
+          ownerEmail: old.ownerEmail,
+          members: old.members,
+          pendingMembers: old.pendingMembers,
+          memberRoles: old.memberRoles,
+          status: newStatus,
+          tasks: old.tasks,
+          comments: old.comments,
+        );
+        notifyListeners();
+      }
+      return;
+    }
+    try {
+      final project = _projects.firstWhere((p) => p.name == projectName);
+      if (project.id != null) {
+        await FirebaseFirestore.instance
+            .collection('projects')
+            .doc(project.id)
+            .update({'status': newStatus});
+      }
+    } catch (e) {
+      if (kDebugMode) print('Error updating project status: $e');
+    }
+  }
+
   Future<void> deleteTask(String projectName, Task task) async {
     if (_userId == null) {
       try {
