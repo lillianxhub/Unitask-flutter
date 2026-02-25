@@ -182,10 +182,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   Expanded(
                     child: Text(
                       project.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -195,7 +195,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               const SizedBox(height: 4),
               Text(
                 project.description,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -230,48 +233,48 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today,
                         size: 16,
-                        color: Color(0xFF888888),
+                        color: cs.onSurface.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'Due Date : ${project.dueDate}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF888888),
+                          color: cs.onSurface.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
                   ),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.chat_bubble_outline,
                         size: 16,
-                        color: Color(0xFF888888),
+                        color: cs.onSurface.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${project.comments.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF888888),
+                          color: cs.onSurface.withValues(alpha: 0.5),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Icon(
+                      Icon(
                         Icons.attach_file,
                         size: 16,
-                        color: Color(0xFF888888),
+                        color: cs.onSurface.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${project.tasks.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF888888),
+                          color: cs.onSurface.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
