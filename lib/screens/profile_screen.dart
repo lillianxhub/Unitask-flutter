@@ -154,13 +154,49 @@ class ProfileScreen extends StatelessWidget {
                               'ออกจากระบบ',
                               color: const Color(0xFFFF8A80),
                               onTap: () async {
-                                await userManager.logout();
-                                if (context.mounted) {
-                                  Navigator.pushNamedAndRemoveUntil(
-                                    context,
-                                    '/welcome',
-                                    (route) => false,
-                                  );
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    title: const Text('Logout Confirmation'),
+                                    content: const Text(
+                                      'Are you sure you want to log out?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text(
+                                          'Not now',
+                                          style: TextStyle(color: Colors.grey),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: const Text(
+                                          'Confirm',
+                                          style: TextStyle(
+                                            color: Color(0xFFFF8A80),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirm == true) {
+                                  await userManager.logout();
+                                  if (context.mounted) {
+                                    Navigator.pushNamedAndRemoveUntil(
+                                      context,
+                                      '/welcome',
+                                      (route) => false,
+                                    );
+                                  }
                                 }
                               },
                             ),

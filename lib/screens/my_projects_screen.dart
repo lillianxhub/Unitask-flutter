@@ -115,6 +115,48 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
     );
   }
 
+  Widget _buildStatusPill(String status) {
+    Color bgColor;
+    Color textColor;
+
+    switch (status.toLowerCase()) {
+      case 'complete':
+      case 'completed':
+        bgColor = const Color(0xFFE8F5E9);
+        textColor = const Color(0xFF2E7D32);
+        break;
+      case 'doing':
+      case 'in progress':
+        bgColor = const Color(0xFFE3F2FD);
+        textColor = const Color(0xFF1565C0);
+        break;
+      case 'pending':
+      case 'todo':
+        bgColor = const Color(0xFFFFF3E0);
+        textColor = const Color(0xFFE65100);
+        break;
+      default:
+        bgColor = const Color(0xFFF5F5F5);
+        textColor = const Color(0xFF757575);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
   Widget _buildProjectCard(Project project) {
     return GestureDetector(
       onTap: () {
@@ -126,6 +168,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
       },
       child: Card(
         color: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 4,
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -163,23 +206,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      project.status,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
-                  ),
+                  _buildStatusPill(project.status),
                   Text(
                     '${project.progress}%',
                     style: const TextStyle(
