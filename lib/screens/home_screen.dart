@@ -7,6 +7,7 @@ import '../widgets/add_project_bottom_sheet.dart';
 import '../widgets/invite_member_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
+import '../widgets/app_floating_action_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -99,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: _buildFAB(),
+      floatingActionButton: AppFloatingActionButton(onPressed: _showAddProject),
     );
   }
 
@@ -600,33 +601,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // --- Floating Action Button ---
-
-  Widget _buildFAB() {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      width: 65,
-      height: 65,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [cs.secondary, cs.tertiary]),
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.5),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        onPressed: _showAddProject,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
     );
   }

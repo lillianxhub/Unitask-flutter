@@ -10,6 +10,7 @@ import '../widgets/add_task_bottom_sheet.dart';
 import '../widgets/bottom_nav.dart';
 import '../widgets/task_detail_bottom_sheet.dart';
 import '../widgets/invite_member_bottom_sheet.dart';
+import '../widgets/app_floating_action_button.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   const ProjectDetailScreen({super.key});
@@ -618,24 +619,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ],
                 ),
               ),
-            // Bottom nav
-            BottomNav(
-              currentIndex: 1, // Stay on "Project" tab
-              onTap: (index) {
-                if (index != 1) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/home',
-                    (route) => false,
-                    arguments: {'tabIndex': index},
-                  );
-                } else {
-                  Navigator.popUntil(context, ModalRoute.withName('/home'));
-                }
-              },
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNav(
+        currentIndex: 1, // Stay on "Project" tab
+        onTap: (index) {
+          if (index != 1) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/home',
+              (route) => false,
+              arguments: {'tabIndex': index},
+            );
+          } else {
+            Navigator.popUntil(context, ModalRoute.withName('/home'));
+          }
+        },
       ),
       floatingActionButton: Consumer<ProjectManager>(
         builder: (context, manager, child) {
@@ -652,37 +652,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
           if (_tabIndex != 0 || !canEdit) return const SizedBox.shrink();
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 50),
-            child: Container(
-              width: 65,
-              height: 65,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFCFBDF6), Color(0xFFFFC7C6)],
-                ),
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFCFBDF6).withValues(alpha: 0.5),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: FloatingActionButton(
-                onPressed: () {
-                  AddTaskBottomSheet.show(
-                    context,
-                    members: project.members,
-                    onSave: _onTaskAdded,
-                  );
-                },
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                child: const Icon(Icons.add, color: Colors.white, size: 30),
-              ),
-            ),
+          return AppFloatingActionButton(
+            onPressed: () {
+              AddTaskBottomSheet.show(
+                context,
+                members: project.members,
+                onSave: _onTaskAdded,
+              );
+            },
           );
         },
       ),
