@@ -976,7 +976,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         InviteMemberBottomSheet.show(
                           context,
                           onInvite: (email, role) {
-                            if (email.isNotEmpty) {
+                            if (email != null && email.isNotEmpty) {
                               context.read<ProjectManager>().inviteMember(
                                 projectName,
                                 email,

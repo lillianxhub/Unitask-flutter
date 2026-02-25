@@ -27,6 +27,36 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  void _showErrorDialog(String title, String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFF8A80),
+          ),
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'ตกลง',
+              style: TextStyle(
+                color: Color(0xFF6750A4),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -128,10 +158,13 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                               arguments: 'HOME',
                             );
                           } else {
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text(error)));
+                            _showErrorDialog('เข้าสู่ระบบไม่สำเร็จ', error);
                           }
+                        } else {
+                          _showErrorDialog(
+                            'ข้อมูลไม่ครบถ้วน',
+                            'กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน',
+                          );
                         }
                       },
                 style: ElevatedButton.styleFrom(

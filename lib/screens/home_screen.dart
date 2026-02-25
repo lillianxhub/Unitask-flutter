@@ -48,8 +48,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? userManager.email
                 : 'owner@unitask.com',
             members: [],
-            pendingMembers: email.isNotEmpty ? [email] : [],
-            memberRoles: email.isNotEmpty ? {email: role} : {},
+            pendingMembers: (email != null && email.isNotEmpty) ? [email] : [],
+            memberRoles: (email != null && email.isNotEmpty)
+                ? {email: role}
+                : {},
           ),
         );
         _refreshProjects();

@@ -37,6 +37,36 @@ class _AddProjectBottomSheetState extends State<AddProjectBottomSheet> {
     super.dispose();
   }
 
+  void _showErrorDialog(String title, String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFF8A80),
+          ),
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'ตกลง',
+              style: TextStyle(
+                color: Color(0xFF6750A4),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -159,14 +189,19 @@ class _AddProjectBottomSheetState extends State<AddProjectBottomSheet> {
               child: ElevatedButton(
                 onPressed: () {
                   final name = _nameController.text.trim();
-                  if (name.isNotEmpty) {
-                    Navigator.pop(context);
-                    widget.onSave?.call(
-                      name,
-                      _descController.text.trim(),
-                      _dueDateController.text.trim(),
+                  final desc = _descController.text.trim();
+                  final dueDate = _dueDateController.text.trim();
+
+                  if (name.isEmpty || desc.isEmpty || dueDate.isEmpty) {
+                    _showErrorDialog(
+                      'ข้อมูลไม่ครบถ้วน',
+                      'กรุณากรอกชื่อโปรเจกต์ รายละเอียด และกำหนดส่งให้ครบทุกช่อง',
                     );
+                    return;
                   }
+
+                  Navigator.pop(context);
+                  widget.onSave?.call(name, desc, dueDate);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
