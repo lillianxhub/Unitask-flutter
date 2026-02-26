@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'locale_manager.dart';
 
 class UserManager extends ChangeNotifier {
   UserManager._() {
@@ -61,6 +62,7 @@ class UserManager extends ChangeNotifier {
       if (FirebaseAuth.instance.currentUser != null) {
         await _saveUserToFirestore(FirebaseAuth.instance.currentUser!);
       }
+      await LocaleManager.instance.loadUserSettings();
       return null; // null means success
     } on FirebaseAuthException catch (e) {
       return e.message ?? 'Login failed';
@@ -91,6 +93,7 @@ class UserManager extends ChangeNotifier {
         await credential.user?.reload();
         await _saveUserToFirestore(FirebaseAuth.instance.currentUser!);
       }
+      await LocaleManager.instance.loadUserSettings();
       return null; // success
     } on FirebaseAuthException catch (e) {
       return e.message ?? 'Registration failed';
@@ -168,6 +171,7 @@ class UserManager extends ChangeNotifier {
   Future<void> logout() async {
     _isGuestMode = false;
     _role = 'User';
+    LocaleManager.instance.resetToDefault();
     try {
       if (!kIsWeb) {
         await GoogleSignIn.instance.signOut();
@@ -210,7 +214,7 @@ class UserManager extends ChangeNotifier {
       }
 
       if (isGoogleSignIn) {
-        return 'บัญชีนี้เข้าสู่ระบบด้วย Google ไม่สามารถเปลี่ยนรหัสผ่านในแอปได้ กรุณาเปลี่ยนรหัสผ่านที่หน้าตั้งค่าบัญชี Google ของท่าน';
+        return LocaleManager.instance.t('google_password_error');
       }
 
       // Re-authenticate before changing password
@@ -230,12 +234,12 @@ class UserManager extends ChangeNotifier {
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) print('Firebase Auth Error: ${e.code}');
       if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        return 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
+        return LocaleManager.instance.t('wrong_current_password');
       }
-      return e.message ?? 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+      return e.message ?? LocaleManager.instance.t('password_change_failed');
     } catch (e) {
       if (kDebugMode) print('Error updating password: $e');
-      return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+      return LocaleManager.instance.t('general_error');
     }
   }
 }

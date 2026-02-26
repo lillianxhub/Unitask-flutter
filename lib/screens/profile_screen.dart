@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
 import '../models/project_manager.dart';
+import '../models/locale_manager.dart';
 import '../widgets/edit_profile_bottom_sheet.dart';
 import '../screens/settings_screen.dart';
 
@@ -13,6 +14,7 @@ class ProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final locale = context.watch<LocaleManager>();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -103,7 +105,7 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'รายละเอียด',
+                        locale.t('details'),
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -143,7 +145,7 @@ class ProfileScreen extends StatelessWidget {
                       _buildMenuItem(
                         context,
                         Icons.edit_outlined,
-                        'แก้ไขข้อมูลส่วนตัว',
+                        locale.t('edit_profile'),
                         onTap: () {
                           EditProfileBottomSheet.show(context);
                         },
@@ -151,7 +153,7 @@ class ProfileScreen extends StatelessWidget {
                       _buildMenuItem(
                         context,
                         Icons.settings_outlined,
-                        'ตั้งค่าบัญชี',
+                        locale.t('account_settings'),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -164,7 +166,7 @@ class ProfileScreen extends StatelessWidget {
                       _buildMenuItem(
                         context,
                         Icons.notifications_outlined,
-                        'การแจ้งเตือน',
+                        locale.t('notifications'),
                         onTap: () {
                           Navigator.pushNamed(context, '/notifications');
                         },
@@ -178,22 +180,24 @@ class ProfileScreen extends StatelessWidget {
                             _buildMenuItem(
                               context,
                               Icons.logout,
-                              'ออกจากระบบ',
+                              locale.t('logout'),
                               color: const Color(0xFFFF8A80),
                               onTap: () async {
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text('Logout Confirmation'),
-                                    content: const Text(
-                                      'Are you sure you want to log out?',
+                                    title: Text(
+                                      locale.t('logout_confirm_title'),
+                                    ),
+                                    content: Text(
+                                      locale.t('logout_confirm_msg'),
                                     ),
                                     actions: [
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.pop(context, false),
                                         child: Text(
-                                          'Not now',
+                                          locale.t('not_now'),
                                           style: TextStyle(
                                             color: cs.onSurface.withValues(
                                               alpha: 0.5,
@@ -204,8 +208,8 @@ class ProfileScreen extends StatelessWidget {
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.pop(context, true),
-                                        child: const Text(
-                                          'Confirm',
+                                        child: Text(
+                                          locale.t('confirm'),
                                           style: TextStyle(
                                             color: Color(0xFFFF8A80),
                                             fontWeight: FontWeight.bold,

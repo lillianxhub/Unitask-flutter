@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
+import '../models/locale_manager.dart';
 
 class LoginBottomSheet extends StatefulWidget {
   const LoginBottomSheet({super.key});
@@ -44,8 +45,8 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'ตกลง',
+            child: Text(
+              LocaleManager.instance.t('ok'),
               style: TextStyle(
                 color: Color(0xFF6750A4),
                 fontWeight: FontWeight.bold,
@@ -160,12 +161,15 @@ class _LoginBottomSheetState extends State<LoginBottomSheet> {
                                 arguments: 'HOME',
                               );
                             } else {
-                              _showErrorDialog('เข้าสู่ระบบไม่สำเร็จ', error);
+                              _showErrorDialog(
+                                LocaleManager.instance.t('login_failed'),
+                                error,
+                              );
                             }
                           } else {
                             _showErrorDialog(
-                              'ข้อมูลไม่ครบถ้วน',
-                              'กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน',
+                              LocaleManager.instance.t('incomplete_data'),
+                              LocaleManager.instance.t('fill_email_password'),
                             );
                           }
                         },

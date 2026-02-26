@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
+import '../models/locale_manager.dart';
 
 class ChangePasswordBottomSheet extends StatefulWidget {
   const ChangePasswordBottomSheet({super.key});
@@ -45,8 +46,8 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'ตกลง',
+            child: Text(
+              LocaleManager.instance.t('ok'),
               style: TextStyle(
                 color: Color(0xFF6750A4),
                 fontWeight: FontWeight.bold,
@@ -74,19 +75,25 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
     if (currentPassword.isEmpty ||
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
-      _showErrorDialog('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกรหัสผ่านให้ครบทุกช่อง');
+      _showErrorDialog(
+        LocaleManager.instance.t('incomplete_data'),
+        LocaleManager.instance.t('fill_all_password_fields'),
+      );
       return;
     }
 
     if (newPassword != confirmPassword) {
-      _showErrorDialog('รหัสผ่านไม่ตรงกัน', 'กรุณายืนยันรหัสผ่านใหม่ให้ตรงกัน');
+      _showErrorDialog(
+        LocaleManager.instance.t('password_mismatch'),
+        LocaleManager.instance.t('confirm_password_mismatch'),
+      );
       return;
     }
 
     if (newPassword.length < 6) {
       _showErrorDialog(
-        'รหัสผ่านสั้นเกินไป',
-        'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
+        LocaleManager.instance.t('password_too_short'),
+        LocaleManager.instance.t('password_min_length'),
       );
       return;
     }
@@ -103,11 +110,16 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
     if (error == null) {
       Navigator.pop(context); // Close bottom sheet on success
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('เปลี่ยนรหัสผ่านสำเร็จแล้ว')),
+        const SnackBar(content: Text('Password changed successfully')),
       );
     } else {
-      _showErrorDialog('เปลี่ยนรหัสผ่านไม่สำเร็จ', error);
-      if (error.contains('บัญชีนี้เข้าสู่ระบบด้วย Google')) {
+      _showErrorDialog(
+        LocaleManager.instance.t('password_change_failed'),
+        error,
+      );
+      if (error.contains(
+        LocaleManager.instance.t('google_password_error').substring(0, 10),
+      )) {
         // Automatically close the bottom sheet after 2 seconds if it's a Google account
         Future.delayed(const Duration(seconds: 3), () {
           if (mounted) Navigator.pop(context);
@@ -163,7 +175,7 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'เปลี่ยนรหัสผ่านใหม่',
+                  LocaleManager.instance.t('change_password_title'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -177,16 +189,20 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
               ],
             ),
             const SizedBox(height: 24),
-            _buildTextField('รหัสผ่านเดิม', _currentPasswordController, true),
+            _buildTextField(
+              LocaleManager.instance.t('current_password'),
+              _currentPasswordController,
+              true,
+            ),
             const SizedBox(height: 16),
             _buildTextField(
-              'รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)',
+              LocaleManager.instance.t('new_password'),
               _newPasswordController,
               true,
             ),
             const SizedBox(height: 16),
             _buildTextField(
-              'ยืนยันรหัสผ่านใหม่',
+              LocaleManager.instance.t('confirm_new_password'),
               _confirmPasswordController,
               true,
             ),
@@ -210,8 +226,8 @@ class _ChangePasswordBottomSheetState extends State<ChangePasswordBottomSheet> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'บันทึก',
+                      : Text(
+                          LocaleManager.instance.t('save'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,

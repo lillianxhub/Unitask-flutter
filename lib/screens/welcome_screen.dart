@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/locale_manager.dart';
 import '../widgets/login_bottom_sheet.dart';
 import '../widgets/register_bottom_sheet.dart';
 import 'package:provider/provider.dart';
@@ -150,8 +151,8 @@ class WelcomeScreen extends StatelessWidget {
                     arguments: 'HOME',
                   );
                 },
-                child: const Text(
-                  'เข้าใช้งานแบบ Guest',
+                child: Text(
+                  LocaleManager.instance.t('guest_login'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

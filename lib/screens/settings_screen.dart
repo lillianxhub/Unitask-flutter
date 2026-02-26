@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/theme_manager.dart';
+import '../models/locale_manager.dart';
 import '../widgets/change_password_bottom_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -11,66 +12,190 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'ตั้งค่าบัญชี',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.bold),
+    return Consumer<LocaleManager>(
+      builder: (context, locale, _) {
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text(
+              locale.t('account_settings'),
+              style: TextStyle(
+                color: cs.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            elevation: 0,
+            iconTheme: IconThemeData(color: cs.onSurface),
+          ),
+          body: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Text(
+                  locale.t('account_security'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
+                ),
+              ),
+              _buildSettingsTile(
+                context,
+                icon: Icons.lock_outline,
+                title: locale.t('change_password'),
+                onTap: () {
+                  ChangePasswordBottomSheet.show(context);
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Divider(height: 32, color: cs.outline),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                child: Text(
+                  locale.t('other_settings'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
+                ),
+              ),
+              Consumer<ThemeManager>(
+                builder: (context, themeManager, _) {
+                  return _buildThemeToggleTile(context, themeManager, locale);
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildSettingsTile(
+                context,
+                icon: Icons.language,
+                title: locale.t('language'),
+                subtitle: locale.isThai
+                    ? locale.t('language_thai')
+                    : locale.t('language_english'),
+                onTap: () => _showLanguageDialog(context, locale),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context, LocaleManager locale) {
+    final cs = Theme.of(context).colorScheme;
+    String selected = locale.locale;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                locale.t('select_language'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildLanguageOption(
+                    context,
+                    flag: '🇹🇭',
+                    label: 'ภาษาไทย',
+                    value: 'th',
+                    selected: selected,
+                    onTap: () {
+                      setDialogState(() => selected = 'th');
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildLanguageOption(
+                    context,
+                    flag: '🇺🇸',
+                    label: 'English',
+                    value: 'en',
+                    selected: selected,
+                    onTap: () {
+                      setDialogState(() => selected = 'en');
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    locale.t('cancel'),
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    locale.setLocale(selected);
+                    Navigator.pop(context);
+                  },
+                  child: Text(locale.t('confirm')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption(
+    BuildContext context, {
+    required String flag,
+    required String label,
+    required String value,
+    required String selected,
+    required VoidCallback onTap,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final isSelected = value == selected;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? cs.primary.withValues(alpha: 0.1)
+              : cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? cs.primary : Colors.transparent,
+            width: 2,
+          ),
         ),
-        backgroundColor: theme.appBarTheme.backgroundColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: cs.onSurface),
-      ),
-      body: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            child: Text(
-              'ความปลอดภัยบัญชี',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onSurface,
+                ),
               ),
             ),
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.lock_outline,
-            title: 'เปลี่ยนรหัสผ่าน',
-            onTap: () {
-              ChangePasswordBottomSheet.show(context);
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(height: 32, color: cs.outline),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Text(
-              'การตั้งค่าอื่นๆ',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
-              ),
-            ),
-          ),
-          Consumer<ThemeManager>(
-            builder: (context, themeManager, _) {
-              return _buildThemeToggleTile(context, themeManager);
-            },
-          ),
-          const SizedBox(height: 8),
-          _buildSettingsTile(
-            context,
-            icon: Icons.language,
-            title: 'ภาษา (เร็วๆ นี้)',
-            onTap: () {},
-          ),
-        ],
+            if (isSelected)
+              Icon(Icons.check_circle, color: cs.primary, size: 24),
+          ],
+        ),
       ),
     );
   }
@@ -78,6 +203,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildThemeToggleTile(
     BuildContext context,
     ThemeManager themeManager,
+    LocaleManager locale,
   ) {
     final cs = Theme.of(context).colorScheme;
     return ListTile(
@@ -96,7 +222,7 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
       title: Text(
-        'ธีมมืด',
+        locale.t('dark_theme'),
         style: TextStyle(
           fontWeight: FontWeight.w500,
           fontSize: 16,
@@ -116,6 +242,7 @@ class SettingsScreen extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
+    String? subtitle,
     required VoidCallback onTap,
   }) {
     final cs = Theme.of(context).colorScheme;
@@ -137,6 +264,15 @@ class SettingsScreen extends StatelessWidget {
           color: cs.onSurface,
         ),
       ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 13,
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
+            )
+          : null,
       trailing: Icon(
         Icons.chevron_right,
         color: cs.onSurface.withValues(alpha: 0.4),

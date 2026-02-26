@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/locale_manager.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InviteMemberBottomSheet extends StatefulWidget {
@@ -49,8 +50,8 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'ตกลง',
+            child: Text(
+              LocaleManager.instance.t('ok'),
               style: TextStyle(
                 color: Color(0xFF6750A4),
                 fontWeight: FontWeight.bold,
@@ -252,9 +253,9 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
             const SizedBox(height: 16),
             // Skip Checkbox
             CheckboxListTile(
-              title: const Text(
-                'ยังไม่เชิญใครในตอนนี้',
-                style: TextStyle(fontWeight: FontWeight.w500),
+              title: Text(
+                LocaleManager.instance.t('skip_invite'),
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               value: _skipInvite,
               activeColor: const Color(0xFF6750A4),
@@ -286,8 +287,8 @@ class _InviteMemberBottomSheetState extends State<InviteMemberBottomSheet> {
 
                     if (!_skipInvite && email.isEmpty) {
                       _showErrorDialog(
-                        'ข้อมูลไม่ครบถ้วน',
-                        'กรุณาระบุอีเมลที่ต้องการเชิญ หรือกดติ๊ก "ยังไม่เชิญใครในตอนนี้"',
+                        LocaleManager.instance.t('incomplete_data'),
+                        LocaleManager.instance.t('fill_invite_email'),
                       );
                       return;
                     }

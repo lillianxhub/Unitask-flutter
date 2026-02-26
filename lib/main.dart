@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'models/project_manager.dart';
 import 'models/user_manager.dart';
 import 'models/theme_manager.dart';
+import 'models/locale_manager.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/my_projects_screen.dart';
@@ -20,6 +21,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await ThemeManager.instance.loadTheme();
+  await LocaleManager.instance.loadLocale();
 
   runApp(
     MultiProvider(
@@ -27,6 +29,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ProjectManager.instance),
         ChangeNotifierProvider(create: (_) => UserManager.instance),
         ChangeNotifierProvider(create: (_) => ThemeManager.instance),
+        ChangeNotifierProvider(create: (_) => LocaleManager.instance),
       ],
       child: const UniTaskApp(),
     ),
