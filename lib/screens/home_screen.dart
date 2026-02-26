@@ -7,6 +7,7 @@ import '../widgets/add_project_bottom_sheet.dart';
 import '../widgets/invite_member_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
+import '../models/locale_manager.dart';
 import '../widgets/app_floating_action_button.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +18,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _refreshProjects() {
     setState(() {});
   }
@@ -63,6 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Watch locale so the widget rebuilds when language changes
+    context.watch<LocaleManager>();
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -75,6 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Consumer<ProjectManager>(
                 builder: (context, manager, child) {
                   final projects = manager.projects;
+                  if (_searchQuery.isNotEmpty) {
+                    return _buildSearchResults(projects);
+                  }
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -125,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Consumer<UserManager>(
                 builder: (context, user, child) {
                   return Text(
-                    'สวัสดี, ${user.name}',
+                    '${LocaleManager.instance.t('hello')}, ${user.name}',
                     style: TextStyle(
                       fontSize: 16,
                       color: cs.primary,
@@ -200,9 +215,15 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: TextField(
+                controller: _searchController,
                 style: TextStyle(color: cs.onSurface),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.trim().toLowerCase();
+                  });
+                },
                 decoration: InputDecoration(
-                  hintText: 'Search',
+                  hintText: LocaleManager.instance.t('search_hint'),
                   hintStyle: TextStyle(
                     color: cs.onSurface.withValues(alpha: 0.4),
                   ),
@@ -211,7 +232,270 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            if (_searchQuery.isNotEmpty)
+              IconButton(
+                icon: Icon(
+                  Icons.close,
+                  color: cs.onSurface.withValues(alpha: 0.4),
+                  size: 20,
+                ),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+              )
+            else
+              const SizedBox(width: 16),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults(List<Project> projects) {
+    final cs = Theme.of(context).colorScheme;
+
+    // Filter projects by name or description
+    final matchedProjects = projects.where((p) {
+      return p.name.toLowerCase().contains(_searchQuery) ||
+          p.description.toLowerCase().contains(_searchQuery);
+    }).toList();
+
+    // Filter tasks by title or description, keeping reference to parent project
+    final List<Map<String, dynamic>> matchedTasks = [];
+    for (var project in projects) {
+      for (var task in project.tasks) {
+        if (task.title.toLowerCase().contains(_searchQuery) ||
+            task.description.toLowerCase().contains(_searchQuery)) {
+          matchedTasks.add({'task': task, 'project': project});
+        }
+      }
+    }
+
+    final hasResults = matchedProjects.isNotEmpty || matchedTasks.isNotEmpty;
+
+    if (!hasResults) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 60),
+          child: Column(
+            children: [
+              Icon(
+                Icons.search_off_rounded,
+                size: 64,
+                color: cs.onSurface.withValues(alpha: 0.2),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '${LocaleManager.instance.t('no_results_for')} "${_searchController.text}"',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                LocaleManager.instance.t('try_other_keyword'),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: cs.onSurface.withValues(alpha: 0.3),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Projects section
+          if (matchedProjects.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(Icons.folder_outlined, size: 20, color: cs.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Projects (${matchedProjects.length})',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...matchedProjects.map((p) => _buildProjectCard(p)),
+            const SizedBox(height: 20),
+          ],
+          // Tasks section
+          if (matchedTasks.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(Icons.task_alt_outlined, size: 20, color: cs.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Tasks (${matchedTasks.length})',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ...matchedTasks.map(
+              (t) => _buildSearchTaskCard(
+                t['task'] as Task,
+                t['project'] as Project,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchTaskCard(Task task, Project project) {
+    final cs = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/project-detail',
+          arguments: {'name': project.name},
+        );
+      },
+      child: Card(
+        color: cs.surface,
+        surfaceTintColor: cs.surface,
+        elevation: 2,
+        margin: const EdgeInsets.only(bottom: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    task.isCompleted
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    size: 20,
+                    color: task.isCompleted ? Colors.green : cs.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      task.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
+                  ),
+                  _buildPriorityBadge(task.priority),
+                ],
+              ),
+              if (task.description.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 30),
+                  child: Text(
+                    task.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 30),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.folder_outlined,
+                      size: 14,
+                      color: cs.primary.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      project.name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.calendar_today,
+                      size: 14,
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityBadge(String priority) {
+    Color color;
+    switch (priority.toLowerCase()) {
+      case 'high':
+        color = Colors.red;
+        break;
+      case 'medium':
+        color = Colors.orange;
+        break;
+      case 'low':
+        color = Colors.green;
+        break;
+      default:
+        color = Colors.grey;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        priority,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
         ),
       ),
     );
@@ -267,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'ตอนนี้ไม่มีงานด่วน ไปพักผ่อนได้เลย!',
+              LocaleManager.instance.t('no_urgent_tasks'),
               style: TextStyle(
                 fontSize: 16,
                 color: cs.onSurface.withValues(alpha: 0.5),

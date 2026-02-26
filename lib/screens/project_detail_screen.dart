@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/project.dart';
 import '../models/project_manager.dart';
+import '../models/locale_manager.dart';
 import '../models/user_manager.dart';
 import '../models/task.dart';
 import '../widgets/add_task_bottom_sheet.dart';
@@ -216,8 +217,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
-                                            content: const Text(
-                                              'โปรเจคเสร็จสิ้นแล้ว ✅',
+                                            content: Text(
+                                              LocaleManager.instance.t(
+                                                'project_completed',
+                                              ),
                                             ),
                                             backgroundColor: Colors.green,
                                             duration: const Duration(
@@ -236,8 +239,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
-                                            content: const Text(
-                                              'เปิดโปรเจคใหม่แล้ว 🔄',
+                                            content: Text(
+                                              LocaleManager.instance.t(
+                                                'project_reopened',
+                                              ),
                                             ),
                                             backgroundColor: cs.primary,
                                             duration: const Duration(
@@ -249,15 +254,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                         showDialog(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
-                                            title: const Text('ลบโปรเจค'),
+                                            title: Text(
+                                              LocaleManager.instance.t(
+                                                'delete_project',
+                                              ),
+                                            ),
                                             content: Text(
-                                              'คุณแน่ใจหรือไม่ว่าต้องการลบ "${project.name}"?',
+                                              '${LocaleManager.instance.t('delete_project_confirm')} "${project.name}"?',
                                             ),
                                             actions: [
                                               TextButton(
                                                 onPressed: () =>
                                                     Navigator.pop(ctx),
-                                                child: const Text('ยกเลิก'),
+                                                child: Text(
+                                                  LocaleManager.instance.t(
+                                                    'cancel',
+                                                  ),
+                                                ),
                                               ),
                                               TextButton(
                                                 onPressed: () {
@@ -274,8 +287,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                                     arguments: {'tabIndex': 0},
                                                   );
                                                 },
-                                                child: const Text(
-                                                  'ลบ',
+                                                child: Text(
+                                                  LocaleManager.instance.t(
+                                                    'delete',
+                                                  ),
                                                   style: TextStyle(
                                                     color: Colors.red,
                                                   ),
@@ -490,7 +505,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         controller: _commentController,
                         style: TextStyle(color: cs.onSurface),
                         decoration: InputDecoration(
-                          hintText: 'เขียนความคิดเห็น...',
+                          hintText: LocaleManager.instance.t('write_comment'),
                           hintStyle: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.3),
                           ),
@@ -658,15 +673,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
               const SizedBox(height: 16),
               _detailRow(
-                'ผู้รับผิดชอบ',
+                LocaleManager.instance.t('assignee'),
                 _isLoadingMembers
-                    ? 'กำลังโหลด...'
+                    ? LocaleManager.instance.t('loading')
                     : _memberNamesMap.values.join(', '),
               ),
               const SizedBox(height: 16),
-              _detailRow('วันครบกำหนด', project.dueDate),
+              _detailRow(
+                LocaleManager.instance.t('due_date_label'),
+                project.dueDate,
+              ),
               const SizedBox(height: 16),
-              _detailRow('สถานะ', project.status),
+              _detailRow(LocaleManager.instance.t('status'), project.status),
               const SizedBox(height: 32),
               // Comment section
               Text(
@@ -682,7 +700,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: Text(
-                    'ยังไม่มีความคิดเห็น',
+                    LocaleManager.instance.t('no_comments'),
                     style: TextStyle(
                       color: cs.onSurface.withValues(alpha: 0.5),
                     ),

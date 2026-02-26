@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/project.dart';
 import '../models/project_manager.dart';
+import '../models/locale_manager.dart';
 import '../models/user_manager.dart';
 import '../widgets/bottom_nav.dart';
 
@@ -241,15 +242,21 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                           ),
                           const SizedBox(height: 16),
                           _detailRow(
-                            'ผู้รับผิดชอบ',
+                            LocaleManager.instance.t('assignee'),
                             _isLoadingMembers
-                                ? 'กำลังโหลด...'
+                                ? LocaleManager.instance.t('loading')
                                 : _memberNames.join(', '),
                           ),
                           const SizedBox(height: 16),
-                          _detailRow('วันครบกำหนด', project.dueDate),
+                          _detailRow(
+                            LocaleManager.instance.t('due_date_label'),
+                            project.dueDate,
+                          ),
                           const SizedBox(height: 16),
-                          _detailRow('สถานะ', project.status),
+                          _detailRow(
+                            LocaleManager.instance.t('status'),
+                            project.status,
+                          ),
                         ],
                       ),
                     ),
@@ -273,7 +280,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               child: Text(
-                                'ยังไม่มีความคิดเห็น',
+                                LocaleManager.instance.t('no_comments'),
                                 style: TextStyle(
                                   color: cs.onSurface.withValues(alpha: 0.5),
                                 ),
@@ -319,7 +326,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                       controller: _commentController,
                       style: TextStyle(color: cs.onSurface),
                       decoration: InputDecoration(
-                        hintText: 'เขียนความคิดเห็น...',
+                        hintText: LocaleManager.instance.t('write_comment'),
                         hintStyle: TextStyle(
                           color: cs.onSurface.withValues(alpha: 0.3),
                         ),
