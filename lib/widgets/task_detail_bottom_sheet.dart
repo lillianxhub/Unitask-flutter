@@ -56,17 +56,57 @@ class TaskDetailBottomSheet extends StatefulWidget {
 
 class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
   final TextEditingController _commentController = TextEditingController();
+  late TextEditingController _descriptionController;
   late bool _isCompleted;
+  late DateTime _dueDate;
+  late String _priority;
 
   @override
   void initState() {
     super.initState();
     _isCompleted = widget.task.isCompleted;
+    _descriptionController = TextEditingController(
+      text: widget.task.description,
+    );
+    _dueDate = widget.task.dueDate;
+    _priority = widget.task.priority;
+  }
+
+  void _updateTask() {
+    if (widget.onUpdate != null) {
+      final updatedTask = Task(
+        title: widget.task.title,
+        description: _descriptionController.text.trim(),
+        dueDate: _dueDate,
+        createdDate: widget.task.createdDate,
+        assignedTo: widget.task.assignedTo,
+        priority: _priority,
+        isCompleted: _isCompleted,
+        comments: List.from(widget.task.comments),
+      );
+      widget.onUpdate!(updatedTask);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dueDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != _dueDate) {
+      setState(() {
+        _dueDate = picked;
+      });
+      _updateTask();
+    }
   }
 
   @override
   void dispose() {
     _commentController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -112,17 +152,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                         _isCompleted = val;
                       });
                       if (widget.onUpdate != null) {
-                        final updatedTask = Task(
-                          title: widget.task.title,
-                          description: widget.task.description,
-                          dueDate: widget.task.dueDate,
-                          createdDate: widget.task.createdDate,
-                          assignedTo: widget.task.assignedTo,
-                          priority: widget.task.priority,
-                          isCompleted: _isCompleted,
-                          comments: List.from(widget.task.comments),
-                        );
-                        widget.onUpdate!(updatedTask);
+                        _updateTask();
                       }
                     }
                   },
@@ -132,29 +162,118 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            widget.task.description.isEmpty
-                ? 'No description'
-                : widget.task.description,
-            style: TextStyle(
-              fontSize: 16,
-              color: cs.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_today,
-                size: 20,
+          if (widget.canEdit)
+            Focus(
+              onFocusChange: (hasFocus) {
+                if (!hasFocus) {
+                  _updateTask();
+                }
+              },
+              child: TextField(
+                controller: _descriptionController,
+                maxLines: null,
+                style: TextStyle(fontSize: 16, color: cs.onSurface),
+                decoration: InputDecoration(
+                  hintText: 'Add description',
+                  hintStyle: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.4),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
+              ),
+            )
+          else
+            Text(
+              widget.task.description.isEmpty
+                  ? 'No description'
+                  : widget.task.description,
+              style: TextStyle(
+                fontSize: 16,
                 color: cs.onSurface.withValues(alpha: 0.5),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Due Date: ${_formatDate(widget.task.dueDate)}',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: cs.onSurface.withValues(alpha: 0.7),
+            ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Due Date
+              Expanded(
+                child: InkWell(
+                  onTap: widget.canEdit ? _pickDate : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 20,
+                          color: cs.onSurface.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Due: ${_formatDate(_dueDate)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: cs.onSurface.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Priority
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(
+                      Icons.flag_outlined,
+                      size: 20,
+                      color: _getPriorityColor(_priority),
+                    ),
+                    const SizedBox(width: 8),
+                    if (widget.canEdit)
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _priority,
+                          isDense: true,
+                          icon: Icon(
+                            Icons.arrow_drop_down,
+                            color: cs.onSurface,
+                          ),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: cs.onSurface.withValues(alpha: 0.8),
+                          ),
+                          items: ['High', 'Medium', 'Low']
+                              .map(
+                                (p) =>
+                                    DropdownMenuItem(value: p, child: Text(p)),
+                              )
+                              .toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _priority = val;
+                              });
+                              _updateTask();
+                            }
+                          },
+                        ),
+                      )
+                    else
+                      Text(
+                        _priority,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: cs.onSurface.withValues(alpha: 0.8),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -288,5 +407,18 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority) {
+      case 'High':
+        return Colors.red;
+      case 'Medium':
+        return Colors.orange;
+      case 'Low':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 }
