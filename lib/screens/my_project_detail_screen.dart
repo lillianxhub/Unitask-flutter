@@ -44,9 +44,18 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
             Project(name: '', description: '', dueDate: '', ownerId: ''),
       );
 
-      if (project.members.isEmpty) {
+      // Filter only members whose role is 'Owner'
+      final ownerEmails = project.memberRoles.entries
+          .where((entry) => entry.value == 'Owner')
+          .map((entry) => entry.key)
+          .toList();
+
+      if (ownerEmails.isEmpty) {
         if (mounted) {
           setState(() {
+            _memberNames = [
+              project.ownerName.isNotEmpty ? project.ownerName : 'No Owner',
+            ];
             _isLoadingMembers = false;
           });
         }
@@ -55,7 +64,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
 
       final querySnapshot = await FirebaseFirestore.instance
           .collection('users')
-          .where('email', whereIn: project.members)
+          .where('email', whereIn: ownerEmails)
           .get();
 
       final names = querySnapshot.docs
@@ -64,7 +73,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
 
       if (mounted) {
         setState(() {
-          _memberNames = names.isNotEmpty ? names : project.members;
+          _memberNames = names.isNotEmpty ? names : ownerEmails;
           _isLoadingMembers = false;
         });
       }

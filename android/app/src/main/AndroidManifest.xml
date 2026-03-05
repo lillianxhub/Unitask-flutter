@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for FCM push notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Required for sending HTTP requests to FCM API -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="unitask"
         android:name="${applicationName}"

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'locale_manager.dart';
+import '../services/notification_service.dart';
 
 class UserManager extends ChangeNotifier {
   UserManager._() {
@@ -42,10 +43,14 @@ class UserManager extends ChangeNotifier {
 
   Future<void> _saveUserToFirestore(User user) async {
     try {
+      // Get current FCM token for this device
+      final fcmToken = await NotificationService.instance.getToken();
+
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'email': user.email ?? '',
         'name': user.displayName ?? user.email?.split('@')[0] ?? 'User',
+        if (fcmToken != null) 'fcmToken': fcmToken,
       }, SetOptions(merge: true));
     } catch (e) {
       if (kDebugMode) print('Error saving user to Firestore: $e');

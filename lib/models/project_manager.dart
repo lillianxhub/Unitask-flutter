@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'project.dart';
 import 'task.dart';
+import '../services/notification_service.dart';
 
 class ProjectManager extends ChangeNotifier {
   ProjectManager._() {
@@ -574,6 +575,14 @@ class ProjectManager extends ChangeNotifier {
           if (kDebugMode)
             print('Successfully created invite notification for $email');
 
+          // Send push notification to the invited user's device
+          _sendPushToUserByEmail(
+            recipientEmail: email,
+            title: '📩 คำเชิญใหม่!',
+            body: '$senderName ได้เชิญคุณเข้าร่วมโปรเจค "${project.name}"',
+            data: {'type': 'invite', 'projectId': project.id ?? ''},
+          );
+
           notifyListeners();
         }
       }
@@ -600,6 +609,22 @@ class ProjectManager extends ChangeNotifier {
               'members': project.members,
               'pendingMembers': project.pendingMembers,
             });
+
+        // Get the accepting user's display name
+        final acceptingUserName =
+            FirebaseAuth.instance.currentUser?.displayName ??
+            userEmail.split('@').first;
+
+        // Send push notification to the project owner
+        if (project.ownerEmail.isNotEmpty) {
+          _sendPushToUserByEmail(
+            recipientEmail: project.ownerEmail,
+            title: '✅ ตอบรับคำเชิญแล้ว!',
+            body: '$acceptingUserName ได้เข้าร่วมโปรเจค "${project.name}" แล้ว',
+            data: {'type': 'accept', 'projectId': project.id ?? ''},
+          );
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -696,6 +721,36 @@ class ProjectManager extends ChangeNotifier {
   }
 
   List<Project> getAllProjects() => projects;
+
+  /// Helper: look up a user's FCM token by email and send a push notification.
+  Future<void> _sendPushToUserByEmail({
+    required String recipientEmail,
+    required String title,
+    required String body,
+    Map<String, String>? data,
+  }) async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: recipientEmail)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) return;
+
+      final fcmToken = query.docs.first.data()['fcmToken'] as String?;
+      if (fcmToken == null || fcmToken.isEmpty) return;
+
+      await NotificationService.sendPushNotification(
+        targetFcmToken: fcmToken,
+        title: title,
+        body: body,
+        data: data,
+      );
+    } catch (e) {
+      if (kDebugMode) print('Error sending push to $recipientEmail: $e');
+    }
+  }
 
   int get successRate {
     int totalTasks = 0;

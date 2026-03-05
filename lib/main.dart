@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'models/project_manager.dart';
@@ -14,12 +15,20 @@ import 'screens/project_detail_screen.dart';
 import 'screens/members_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/main_layout.dart';
-
 import 'screens/notifications_screen.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Register background FCM handler BEFORE Firebase.initializeApp
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize notification service (permissions + local notifications channel)
+  await NotificationService.instance.initialize();
+
   await ThemeManager.instance.loadTheme();
   await LocaleManager.instance.loadLocale();
 
