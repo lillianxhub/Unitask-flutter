@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets
+/unitask-app-663dee45bd42.json
+/assets/service_account.json
