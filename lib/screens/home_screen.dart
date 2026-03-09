@@ -20,6 +20,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String? _selectedTaskFilter; // 'Total', 'Doing', or 'Done'
+  bool _showAllContent = false;
 
   @override
   void dispose() {
@@ -90,26 +92,62 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (_searchQuery.isNotEmpty) {
                     return _buildSearchResults(projects);
                   }
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDueDateHeader(),
-                        const SizedBox(height: 16),
-                        _buildUpcomingTasksList(projects),
-                        const SizedBox(height: 28),
-                        _buildProjectSectionHeader(),
-                        const SizedBox(height: 8),
-                        Column(
-                          children: projects
-                              .map((p) => _buildProjectCard(p))
-                              .toList(),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        final userEmail = FirebaseAuth.instance.currentUser?.email ?? 'guest@unitask.com';
+
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildMyTasksSummary(projects, userEmail),
+                              if (_selectedTaskFilter != null)
+                                _buildFilteredTasksList(projects, userEmail),
+
+                              const SizedBox(height: 24),
+                              
+                              if (_selectedTaskFilter == null) ...[
+                                Center(
+                                  child: TextButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _showAllContent = !_showAllContent;
+                                      });
+                                    },
+                                    icon: Icon(_showAllContent ? Icons.visibility_off : Icons.visibility),
+                                    label: Text(
+                                      _showAllContent ? 'Hide Dashboard' : 'View Projects & Upcoming',
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Theme.of(context).colorScheme.primary,
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+
+                              if (_showAllContent) ...[
+                                _buildDueDateHeader(),
+                                const SizedBox(height: 16),
+                                _buildUpcomingTasksList(projects),
+                                const SizedBox(height: 28),
+                                _buildProjectSectionHeader(),
+                                const SizedBox(height: 8),
+                                Column(
+                                  children: projects
+                                      .map((p) => _buildProjectCard(p))
+                                      .toList(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
               ),
             ),
           ],
@@ -446,19 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
-                      color: cs.onSurface.withValues(alpha: 0.4),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: cs.onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
+                    _buildDueDateUX(task.dueDate),
                   ],
                 ),
               ),
@@ -499,6 +525,214 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildDueDateUX(DateTime dueDate) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final diffDays = due.difference(today).inDays;
+
+    String text;
+    Color color;
+
+    if (diffDays < 0) {
+      text = 'Overdue by ${-diffDays} day(s)';
+      color = Colors.red;
+    } else if (diffDays == 0) {
+      text = 'Today';
+      color = Colors.orange;
+    } else if (diffDays == 1) {
+      text = 'Tomorrow';
+      color = Colors.amber.shade700;
+    } else {
+      text = '${dueDate.day}/${dueDate.month}/${dueDate.year}';
+      color = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.calendar_today,
+          size: 14,
+          color: color,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: diffDays <= 1 ? FontWeight.bold : FontWeight.normal,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMyTasksSummary(List<Project> projects, String userEmail) {
+    if (userEmail == 'guest@unitask.com') return const SizedBox.shrink();
+
+    int totalAssigned = 0;
+    int completed = 0;
+    int doing = 0;
+
+    for (var project in projects) {
+      for (var task in project.tasks) {
+        if (task.assignedTo == userEmail) {
+          totalAssigned++;
+          if (task.isCompleted) {
+            completed++;
+          } else {
+            doing++;
+          }
+        }
+      }
+    }
+
+    // Don't show if the user has no tasks assigned at all yet
+    if (totalAssigned == 0) return const SizedBox.shrink();
+
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'My Tasks Summary',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(child: _buildSummaryBox('Total', totalAssigned.toString(), Icons.assignment_outlined, cs.primary)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildSummaryBox('Doing', doing.toString(), Icons.hourglass_empty, Colors.orange)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildSummaryBox('Done', completed.toString(), Icons.check_circle_outline, Colors.green)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilteredTasksList(List<Project> projects, String userEmail) {
+    List<Map<String, dynamic>> filteredTasks = [];
+    
+    for (var project in projects) {
+      for (var task in project.tasks) {
+        if (task.assignedTo == userEmail) {
+          if (_selectedTaskFilter == 'Total') {
+            filteredTasks.add({'task': task, 'project': project});
+          } else if (_selectedTaskFilter == 'Doing' && !task.isCompleted) {
+            filteredTasks.add({'task': task, 'project': project});
+          } else if (_selectedTaskFilter == 'Done' && task.isCompleted) {
+            filteredTasks.add({'task': task, 'project': project});
+          }
+        }
+      }
+    }
+
+    if (filteredTasks.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: Center(
+          child: Text(
+            'No $_selectedTaskFilter tasks found.',
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          '$_selectedTaskFilter Tasks',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...filteredTasks.map(
+          (t) => _buildSearchTaskCard(
+            t['task'] as Task,
+            t['project'] as Project,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryBox(String title, String count, IconData icon, Color color) {
+    final cs = Theme.of(context).colorScheme;
+    final isSelected = _selectedTaskFilter == title;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (_selectedTaskFilter == title) {
+            _selectedTaskFilter = null;
+          } else {
+            _selectedTaskFilter = title;
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : cs.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected ? color.withValues(alpha: 0.2) : color.withValues(alpha: 0.05),
+              blurRadius: isSelected ? 12 : 6,
+              offset: const Offset(0, 4),
+            )
+          ],
+          border: Border.all(
+            color: isSelected ? color : color.withValues(alpha: 0.2),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: color, size: 24),
+              Text(
+                count,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    ));
   }
 
   Widget _buildDueDateHeader() {
@@ -575,29 +809,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildUrgentTaskCard(Task task, Project project) {
-    final now = DateTime.now();
-    // Consider overdue if due date is before today (ignoring time for simplicity)
-    final today = DateTime(now.year, now.month, now.day);
-    final due = DateTime(
-      task.dueDate.year,
-      task.dueDate.month,
-      task.dueDate.day,
-    );
-    final isOverdue = due.isBefore(today);
-
-    final num daysDiff = due.difference(today).inDays;
-    String dueText;
-    if (isOverdue) {
-      dueText = 'Overdue by ${-daysDiff} day(s)';
-    } else if (daysDiff == 0) {
-      dueText = 'Today';
-    } else if (daysDiff == 1) {
-      dueText = 'Tomorrow';
-    } else {
-      dueText =
-          '${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}';
-    }
-
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -659,26 +870,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 16,
-                    color: isOverdue ? Colors.red : const Color(0xFF888888),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    dueText,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: isOverdue
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isOverdue ? Colors.red : const Color(0xFF888888),
-                    ),
-                  ),
-                ],
-              ),
+              _buildDueDateUX(task.dueDate),
             ],
           ),
         ),

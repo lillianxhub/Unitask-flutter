@@ -4,6 +4,8 @@ import '../models/task.dart';
 class TaskDetailBottomSheet extends StatefulWidget {
   final Task task;
   final bool canEdit;
+  final bool canMarkComplete;
+  final bool canComment;
   final VoidCallback? onDelete;
   final ValueChanged<Task>? onUpdate;
   final ValueChanged<String>? onComment;
@@ -12,6 +14,8 @@ class TaskDetailBottomSheet extends StatefulWidget {
     super.key,
     required this.task,
     this.canEdit = false,
+    this.canMarkComplete = false,
+    this.canComment = false,
     this.onDelete,
     this.onUpdate,
     this.onComment,
@@ -21,6 +25,8 @@ class TaskDetailBottomSheet extends StatefulWidget {
     BuildContext context,
     Task task, {
     bool canEdit = false,
+    bool canMarkComplete = false,
+    bool canComment = false,
     VoidCallback? onDelete,
     ValueChanged<Task>? onUpdate,
     ValueChanged<String>? onComment,
@@ -41,6 +47,8 @@ class TaskDetailBottomSheet extends StatefulWidget {
           child: TaskDetailBottomSheet(
             task: task,
             canEdit: canEdit,
+            canMarkComplete: canMarkComplete,
+            canComment: canComment,
             onDelete: onDelete,
             onUpdate: onUpdate,
             onComment: onComment,
@@ -142,7 +150,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                   ),
                 ),
               ),
-              if (widget.canEdit)
+              if (widget.canMarkComplete || widget.canEdit)
                 Checkbox(
                   value: _isCompleted,
                   activeColor: const Color(0xFFCFBDF6),
@@ -334,7 +342,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
               ),
             ),
           const SizedBox(height: 16),
-          if (widget.canEdit) ...[
+          if (widget.canComment || widget.canEdit) ...[
             Row(
               children: [
                 Expanded(
