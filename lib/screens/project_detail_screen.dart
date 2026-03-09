@@ -807,6 +807,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             (userEmail == project.ownerId ? 'Owner' : 'Editor');
         final canEdit = userRole == 'Owner' || userRole == 'Editor';
 
+        // Viewers only see tasks assigned to them
+        final visibleTasks = canEdit
+            ? tasks
+            : tasks.where((t) => t.assignedTo == userEmail).toList();
+
         return Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -838,52 +843,55 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 ),
                 const SizedBox(height: 40),
               ] else ...[
-                ...tasks.map(
-                  (task) => GestureDetector(
-                    onTap: () {
-                      TaskDetailBottomSheet.show(
-                        context,
-                        task,
-                        canEdit: canEdit,
-                        onDelete: canEdit
-                            ? () {
-                                context.read<ProjectManager>().deleteTask(
-                                  projectName,
-                                  task,
-                                );
-                              }
-                            : null,
-                        onUpdate: canEdit
-                            ? (updatedTask) {
-                                context.read<ProjectManager>().updateTask(
-                                  projectName,
-                                  task,
-                                  updatedTask,
-                                );
-                              }
-                            : null,
-                        onComment: canEdit
-                            ? (commentText) {
-                                final userManager = context.read<UserManager>();
-                                final newComment = Comment(
-                                  id: UniqueKey().toString(),
-                                  authorEmail: userManager.email,
-                                  authorName: userManager.name,
-                                  text: commentText,
-                                  timestamp: DateTime.now(),
-                                );
-                                context.read<ProjectManager>().addTaskComment(
-                                  projectName,
-                                  task,
-                                  newComment,
-                                );
-                              }
-                            : null,
-                      );
-                    },
-                    child: _buildTaskCard(task),
-                  ),
-                ),
+                ...visibleTasks.map(
+                  (task) {
+                    final isAssignedToMe = task.assignedTo == userEmail;
+                    return GestureDetector(
+                      onTap: () {
+                        TaskDetailBottomSheet.show(
+                          context,
+                          task,
+                          canEdit: canEdit,
+                          canMarkComplete: canEdit || isAssignedToMe,
+                          canComment: true, // Viewers can comment on tasks they can see
+                          onDelete: canEdit
+                              ? () {
+                                  context.read<ProjectManager>().deleteTask(
+                                    projectName,
+                                    task,
+                                  );
+                                }
+                              : null,
+                          onUpdate: (canEdit || isAssignedToMe)
+                              ? (updatedTask) {
+                                  context.read<ProjectManager>().updateTask(
+                                    projectName,
+                                    task,
+                                    updatedTask,
+                                  );
+                                }
+                              : null,
+                          onComment: (commentText) {
+                            final userManager = context.read<UserManager>();
+                            final newComment = Comment(
+                              id: UniqueKey().toString(),
+                              authorEmail: userManager.email,
+                              authorName: userManager.name,
+                              text: commentText,
+                              timestamp: DateTime.now(),
+                            );
+                            context.read<ProjectManager>().addTaskComment(
+                              projectName,
+                              task,
+                              newComment,
+                            );
+                          },
+                        );
+                      },
+                      child: _buildTaskCard(task),
+                    );
+                  },
+                ).toList(),
               ],
             ],
           ),
@@ -1162,6 +1170,71 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       ),
                     ),
                   ),
+              // Pending Members
+              if (project.pendingMembers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Pending',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...project.pendingMembers.map(
+                  (email) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildMemberCard(
+                      _isLoadingMembers
+                          ? 'Loading...'
+                          : (_memberNamesMap[email] ?? 'Pending User'),
+                      email,
+                      roleLabel: project.memberRoles[email] ?? 'Editor',
+                      canEditRole: false, // Cannot edit role while pending
+                      isPending: true,
+                      onRemove: (project.ownerId == FirebaseAuth.instance.currentUser?.uid || project.ownerEmail == userEmail)
+                          ? () {
+                              _confirmRemoveMember(context, projectName, email);
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+
+              // Rejected Members
+              if (project.rejectedMembers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Rejected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...project.rejectedMembers.map(
+                  (email) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildMemberCard(
+                      _isLoadingMembers
+                          ? 'Loading...'
+                          : (_memberNamesMap[email] ?? 'Rejected User'),
+                      email,
+                      roleLabel: 'Review', // Re-use styling, but label looks like reviewer or something
+                      canEditRole: false,
+                      isRejected: true,
+                      onRemove: (project.ownerId == FirebaseAuth.instance.currentUser?.uid || project.ownerEmail == userEmail)
+                          ? () {
+                              _confirmRemoveMember(context, projectName, email);
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -1204,10 +1277,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     bool isOwner = false,
     String roleLabel = 'Editor',
     bool canEditRole = false,
+    bool isPending = false,
+    bool isRejected = false,
     ValueChanged<String>? onRoleChanged,
     VoidCallback? onRemove,
   }) {
     final cs = Theme.of(context).colorScheme;
+    final nameStyle = TextStyle(
+      fontWeight: FontWeight.bold,
+      color: isRejected ? Colors.red : cs.onSurface,
+      decoration: isRejected ? TextDecoration.lineThrough : null,
+    );
+    final statusText = isPending ? ' (Pending)' : isRejected ? ' (Rejected)' : '';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1236,11 +1317,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: cs.onSurface,
-                  ),
+                  '$name$statusText',
+                  style: nameStyle,
                 ),
                 Text(
                   email,

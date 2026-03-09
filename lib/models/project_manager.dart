@@ -303,6 +303,7 @@ class ProjectManager extends ChangeNotifier {
           ownerEmail: old.ownerEmail,
           members: old.members,
           pendingMembers: old.pendingMembers,
+          rejectedMembers: old.rejectedMembers,
           memberRoles: old.memberRoles,
           status: newStatus,
           tasks: old.tasks,
@@ -527,6 +528,7 @@ class ProjectManager extends ChangeNotifier {
         // In local guest mode, we just add directly for simplicity
         if (!project.members.contains(email) &&
             !project.pendingMembers.contains(email)) {
+          project.rejectedMembers.remove(email);
           project.pendingMembers.add(email);
           project.memberRoles[email] = role;
           notifyListeners();
@@ -539,6 +541,7 @@ class ProjectManager extends ChangeNotifier {
       if (project.id != null) {
         if (!project.members.contains(email) &&
             !project.pendingMembers.contains(email)) {
+          project.rejectedMembers.remove(email);
           project.pendingMembers.add(email);
           project.memberRoles[email] = role;
           await FirebaseFirestore.instance
@@ -546,6 +549,7 @@ class ProjectManager extends ChangeNotifier {
               .doc(project.id)
               .update({
                 'pendingMembers': project.pendingMembers,
+                'rejectedMembers': project.rejectedMembers,
                 'memberRoles': project.memberRoles,
               });
 
@@ -597,8 +601,9 @@ class ProjectManager extends ChangeNotifier {
 
     try {
       final project = _projects.firstWhere((p) => p.id == projectId);
-      if (project.pendingMembers.contains(userEmail)) {
+      if (project.pendingMembers.contains(userEmail) || project.rejectedMembers.contains(userEmail)) {
         project.pendingMembers.remove(userEmail);
+        project.rejectedMembers.remove(userEmail);
         if (!project.members.contains(userEmail)) {
           project.members.add(userEmail);
         }
@@ -608,6 +613,7 @@ class ProjectManager extends ChangeNotifier {
             .update({
               'members': project.members,
               'pendingMembers': project.pendingMembers,
+              'rejectedMembers': project.rejectedMembers,
             });
 
         // Get the accepting user's display name
@@ -640,12 +646,16 @@ class ProjectManager extends ChangeNotifier {
       final project = _projects.firstWhere((p) => p.id == projectId);
       if (project.pendingMembers.contains(userEmail)) {
         project.pendingMembers.remove(userEmail);
+        if (!project.rejectedMembers.contains(userEmail)) {
+           project.rejectedMembers.add(userEmail);
+        }
         project.memberRoles.remove(userEmail);
         await FirebaseFirestore.instance
             .collection('projects')
             .doc(project.id)
             .update({
               'pendingMembers': project.pendingMembers,
+              'rejectedMembers': project.rejectedMembers,
               'memberRoles': project.memberRoles,
             });
         notifyListeners();
@@ -660,6 +670,8 @@ class ProjectManager extends ChangeNotifier {
       try {
         final project = _projects.firstWhere((p) => p.name == projectName);
         project.members.remove(email);
+        project.pendingMembers.remove(email);
+        project.rejectedMembers.remove(email);
         project.memberRoles.remove(email);
         notifyListeners();
       } catch (e) {}
@@ -670,12 +682,16 @@ class ProjectManager extends ChangeNotifier {
       final project = _projects.firstWhere((p) => p.name == projectName);
       if (project.id != null) {
         project.members.remove(email);
+        project.pendingMembers.remove(email);
+        project.rejectedMembers.remove(email);
         project.memberRoles.remove(email);
         await FirebaseFirestore.instance
             .collection('projects')
             .doc(project.id)
             .update({
               'members': project.members,
+              'pendingMembers': project.pendingMembers,
+              'rejectedMembers': project.rejectedMembers,
               'memberRoles': project.memberRoles,
             });
         notifyListeners();
