@@ -15,6 +15,7 @@ class MyProjectsScreen extends StatefulWidget {
 class _MyProjectsScreenState extends State<MyProjectsScreen> {
   int _selectedFilter = 0;
   int _currentTab = 0; // 0: Projects, 1: Tasks
+  String _selectedPriority = 'All'; // Priority Filter
   final List<String> _filters = ['All', 'Doing', 'Complete', 'Out of Date'];
   double _s = 1.0;
 
@@ -35,13 +36,19 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'My Dashboard',
-                    style: TextStyle(
-                      fontSize: 28 * _s,
-                      fontWeight: FontWeight.bold,
-                      color: cs.onSurface,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'My Dashboard',
+                        style: TextStyle(
+                          fontSize: 28 * _s,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      _buildPriorityDropdown(cs),
+                    ],
                   ),
                   SizedBox(height: 16 * _s),
                   _buildSegmentedControl(cs),
@@ -137,6 +144,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
 
                   if (_currentTab == 0) {
                     // --- PROJECTS VIEW ---
+                    if (_selectedPriority != 'All') {
+                      projects = projects.where((p) => p.tasks.any((t) => t.priority == _selectedPriority && !t.isCompleted)).toList();
+                    }
+
                     if (_selectedFilter == 1) { // Doing
                       projects = projects.where((p) => p.status != 'Complete').toList();
                     } else if (_selectedFilter == 2) { // Complete
@@ -177,6 +188,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                           myTasks.add({'task': task, 'project': project});
                         }
                       }
+                    }
+
+                    if (_selectedPriority != 'All') {
+                      myTasks = myTasks.where((t) => (t['task'] as Task).priority == _selectedPriority).toList();
                     }
 
                     if (_selectedFilter == 1) { // Doing
@@ -656,6 +671,45 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPriorityDropdown(ColorScheme cs) {
+    return Container(
+      height: 36 * _s,
+      padding: EdgeInsets.symmetric(horizontal: 12 * _s),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedPriority,
+          icon: Icon(Icons.keyboard_arrow_down, size: 20 * _s, color: cs.primary),
+          isDense: true,
+          borderRadius: BorderRadius.circular(12),
+          style: TextStyle(
+            fontSize: 13 * _s,
+            fontWeight: FontWeight.w600,
+            color: cs.primary,
+          ),
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              setState(() {
+                _selectedPriority = newValue;
+              });
+            }
+          },
+          items: <String>['All', 'High', 'Medium', 'Low']
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
