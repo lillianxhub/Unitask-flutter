@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? _selectedTaskFilter; // 'Total', 'Doing', or 'Done'
+  String _selectedPriority = 'All'; // Priority Filter
   bool _showAllContent = false;
 
   @override
@@ -105,31 +106,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
                               const SizedBox(height: 24),
                               
-                              if (_selectedTaskFilter == null) ...[
-                                Center(
-                                  child: TextButton.icon(
-                                    onPressed: () {
-                                      setState(() {
-                                        _showAllContent = !_showAllContent;
-                                      });
-                                    },
-                                    icon: Icon(_showAllContent ? Icons.visibility_off : Icons.visibility),
-                                    label: Text(
-                                      _showAllContent ? 'Hide Dashboard' : 'View Projects & Upcoming',
-                                      style: const TextStyle(fontWeight: FontWeight.w600),
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Theme.of(context).colorScheme.primary,
-                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                        side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
-                                      ),
+                              Center(
+                                child: TextButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showAllContent = !_showAllContent;
+                                    });
+                                  },
+                                  icon: Icon(_showAllContent ? Icons.visibility_off : Icons.visibility),
+                                  label: Text(
+                                    _showAllContent ? 'Hide Dashboard' : 'View Projects & Upcoming',
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Theme.of(context).colorScheme.primary,
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
-                              ],
+                              ),
+                              const SizedBox(height: 16),
 
                               if (_showAllContent) ...[
                                 _buildDueDateHeader(),
@@ -580,7 +579,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     for (var project in projects) {
       for (var task in project.tasks) {
-        if (task.assignedTo == userEmail) {
+        if (task.assignedTo == userEmail && 
+            (_selectedPriority == 'All' || task.priority == _selectedPriority)) {
           totalAssigned++;
           if (task.isCompleted) {
             completed++;
@@ -598,13 +598,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'My Tasks Summary',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: cs.onSurface,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'My Tasks Summary',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
+            ),
+            _buildPriorityDropdown(),
+          ],
         ),
         const SizedBox(height: 16),
         Row(
@@ -625,7 +631,8 @@ class _HomeScreenState extends State<HomeScreen> {
     
     for (var project in projects) {
       for (var task in project.tasks) {
-        if (task.assignedTo == userEmail) {
+        if (task.assignedTo == userEmail &&
+            (_selectedPriority == 'All' || task.priority == _selectedPriority)) {
           if (_selectedTaskFilter == 'Total') {
             filteredTasks.add({'task': task, 'project': project});
           } else if (_selectedTaskFilter == 'Doing' && !task.isCompleted) {
@@ -752,7 +759,8 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Map<String, dynamic>> allTasks = [];
     for (var project in projects) {
       for (var task in project.tasks) {
-        if (!task.isCompleted) {
+        if (!task.isCompleted &&
+            (_selectedPriority == 'All' || task.priority == _selectedPriority)) {
           allTasks.add({'task': task, 'project': project});
         }
       }
@@ -873,6 +881,46 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildDueDateUX(task.dueDate),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityDropdown() {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedPriority,
+          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: cs.primary),
+          isDense: true,
+          borderRadius: BorderRadius.circular(12),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: cs.primary,
+          ),
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              setState(() {
+                _selectedPriority = newValue;
+              });
+            }
+          },
+          items: <String>['All', 'High', 'Medium', 'Low']
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
         ),
       ),
     );
