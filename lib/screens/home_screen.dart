@@ -591,9 +591,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // Don't show if the user has no tasks assigned at all yet
-    if (totalAssigned == 0) return const SizedBox.shrink();
-
+    // Keep UI visible even if the user has no tasks assigned at all yet
+    
     final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
