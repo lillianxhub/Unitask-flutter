@@ -964,13 +964,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         priorityColor = Colors.red;
         break;
       case 'Medium':
-        priorityColor = Colors.orange;
+        priorityColor = Colors.purple;
         break;
       case 'Low':
         priorityColor = Colors.blue;
         break;
       default:
-        priorityColor = Colors.orange;
+        priorityColor = Colors.purple;
     }
 
     return Card(

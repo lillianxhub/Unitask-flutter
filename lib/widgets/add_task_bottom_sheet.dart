@@ -203,7 +203,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
               children: [
                 Expanded(child: _buildPriorityChip('High', Colors.red)),
                 const SizedBox(width: 8),
-                Expanded(child: _buildPriorityChip('Medium', Colors.orange)),
+                Expanded(child: _buildPriorityChip('Medium', Colors.purple)),
                 const SizedBox(width: 8),
                 Expanded(child: _buildPriorityChip('Low', Colors.blue)),
               ],

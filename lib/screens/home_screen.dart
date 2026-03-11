@@ -501,10 +501,10 @@ class _HomeScreenState extends State<HomeScreen> {
         color = Colors.red;
         break;
       case 'medium':
-        color = Colors.orange;
+        color = Colors.purple;
         break;
       case 'low':
-        color = Colors.green;
+        color = Colors.blue;
         break;
       default:
         color = Colors.grey;
