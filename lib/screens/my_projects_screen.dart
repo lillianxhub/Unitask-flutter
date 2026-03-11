@@ -243,13 +243,13 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         break;
       case 'doing':
       case 'in progress':
-        bgColor = const Color(0xFFE3F2FD);
-        textColor = const Color(0xFF1565C0);
+        bgColor = const Color(0xFFFFF3E0); // Orange light
+        textColor = const Color(0xFFE65100); // Orange dark
         break;
       case 'pending':
       case 'todo':
-        bgColor = const Color(0xFFFFF3E0);
-        textColor = const Color(0xFFE65100);
+        bgColor = const Color(0xFFE3F2FD); // Blue light
+        textColor = const Color(0xFF1565C0); // Blue dark
         break;
       default:
         bgColor = const Color(0xFFF5F5F5);
@@ -413,41 +413,59 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
   }
 
   Widget _buildPriorityCountBadge(Project project) {
-    if (_selectedPriority == 'All') return const SizedBox.shrink();
+    List<String> prioritiesToCheck = _selectedPriority == 'All'
+        ? ['High', 'Medium', 'Low']
+        : [_selectedPriority];
 
-    int count = project.tasks.where((t) => t.priority == _selectedPriority && !t.isCompleted).length;
-    if (count == 0) return const SizedBox.shrink();
+    List<Widget> badges = [];
 
-    Color color;
-    switch (_selectedPriority.toLowerCase()) {
-      case 'high':
-        color = Colors.red;
-        break;
-      case 'medium':
-        color = Colors.orange;
-        break;
-      case 'low':
-        color = Colors.green;
-        break;
-      default:
-        color = Colors.grey;
+    for (String priority in prioritiesToCheck) {
+      int count = project.tasks
+          .where((t) => t.priority == priority && !t.isCompleted)
+          .length;
+      
+      if (count > 0) {
+        Color color;
+        switch (priority.toLowerCase()) {
+          case 'high':
+            color = Colors.red;
+            break;
+          case 'medium':
+            color = Colors.purple;
+            break;
+          case 'low':
+            color = Colors.blue;
+            break;
+          default:
+            color = Colors.grey;
+        }
+
+        badges.add(
+          Container(
+            margin: EdgeInsets.only(left: 8 * _s),
+            padding: EdgeInsets.symmetric(horizontal: 10 * _s, vertical: 4 * _s),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 12 * _s,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        );
+      }
     }
 
-    return Container(
-      margin: EdgeInsets.only(left: 8 * _s),
-      padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 4 * _s),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        '$count $_selectedPriority',
-        style: TextStyle(
-          fontSize: 11 * _s,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
+    if (badges.isEmpty) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: badges,
     );
   }
 
@@ -692,10 +710,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
       text = 'Overdue by $daysOverdue day(s)';
       icon = Icons.warning_amber_rounded;
     } else if (taskDate.isAtSameMomentAs(today)) {
-      color = Colors.orange;
+      color = Colors.pink;
       text = 'Today';
     } else if (taskDate.isAtSameMomentAs(tomorrow)) {
-      color = Colors.amber.shade700;
+      color = Colors.cyan.shade700;
       text = 'Tomorrow';
     } else {
       color = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
@@ -726,10 +744,10 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         color = Colors.red;
         break;
       case 'medium':
-        color = Colors.orange;
+        color = Colors.purple;
         break;
       case 'low':
-        color = Colors.green;
+        color = Colors.blue;
         break;
       default:
         color = Colors.grey;

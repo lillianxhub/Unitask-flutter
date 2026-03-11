@@ -422,9 +422,9 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
       case 'High':
         return Colors.red;
       case 'Medium':
-        return Colors.orange;
+        return Colors.purple;
       case 'Low':
-        return Colors.green;
+        return Colors.blue;
       default:
         return Colors.grey;
     }
