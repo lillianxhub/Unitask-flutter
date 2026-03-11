@@ -105,10 +105,11 @@ class ProjectManager extends ChangeNotifier {
         .snapshots()
         .listen(
           (snapshot) {
-            if (kDebugMode)
+            if (kDebugMode) {
               print(
                 'Notification listener triggered for $userEmail: ${snapshot.docs.length} docs found.',
               );
+            }
             _notifications = snapshot.docs.map((doc) {
               return AppNotification.fromJson(doc.data(), doc.id);
             }).toList();
@@ -122,8 +123,9 @@ class ProjectManager extends ChangeNotifier {
 
   List<Project> get projects {
     final userEmail = FirebaseAuth.instance.currentUser?.email;
-    if (_userId == null || userEmail == null)
+    if (_userId == null || userEmail == null) {
       return List.unmodifiable(_projects);
+    }
     return _projects.where((p) => p.members.contains(userEmail)).toList();
   }
 
@@ -200,10 +202,11 @@ class ProjectManager extends ChangeNotifier {
         });
       }
       await batch.commit();
-      if (kDebugMode)
+      if (kDebugMode) {
         print(
           'Successfully created ${project.pendingMembers.length} invite notifications on project creation',
         );
+      }
     }
   }
 
@@ -576,8 +579,9 @@ class ProjectManager extends ChangeNotifier {
             'isRead': false,
           });
 
-          if (kDebugMode)
+          if (kDebugMode) {
             print('Successfully created invite notification for $email');
+          }
 
           // Send push notification to the invited user's device
           _sendPushToUserByEmail(
@@ -601,7 +605,8 @@ class ProjectManager extends ChangeNotifier {
 
     try {
       final project = _projects.firstWhere((p) => p.id == projectId);
-      if (project.pendingMembers.contains(userEmail) || project.rejectedMembers.contains(userEmail)) {
+      if (project.pendingMembers.contains(userEmail) ||
+          project.rejectedMembers.contains(userEmail)) {
         project.pendingMembers.remove(userEmail);
         project.rejectedMembers.remove(userEmail);
         if (!project.members.contains(userEmail)) {
@@ -647,7 +652,7 @@ class ProjectManager extends ChangeNotifier {
       if (project.pendingMembers.contains(userEmail)) {
         project.pendingMembers.remove(userEmail);
         if (!project.rejectedMembers.contains(userEmail)) {
-           project.rejectedMembers.add(userEmail);
+          project.rejectedMembers.add(userEmail);
         }
         project.memberRoles.remove(userEmail);
         await FirebaseFirestore.instance

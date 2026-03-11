@@ -25,6 +25,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Map<String, String> _memberNamesMap = {};
   bool _isLoadingMembers = true;
   String _currentProjectName = '';
+  String _taskSortOption = 'None';
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -676,7 +677,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 LocaleManager.instance.t('assignee'),
                 _isLoadingMembers
                     ? LocaleManager.instance.t('loading')
-                    : _memberNamesMap.values.join(', '),
+                    : (_memberNamesMap[project.ownerEmail] ??
+                        (project.ownerName.isNotEmpty
+                            ? project.ownerName
+                            : project.ownerEmail)),
               ),
               const SizedBox(height: 16),
               _detailRow(
@@ -808,9 +812,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         final canEdit = userRole == 'Owner' || userRole == 'Editor';
 
         // Viewers only see tasks assigned to them
-        final visibleTasks = canEdit
-            ? tasks
+        List<Task> visibleTasks = canEdit
+            ? List.from(tasks)
             : tasks.where((t) => t.assignedTo == userEmail).toList();
+
+        if (_taskSortOption == 'Priority') {
+          final priorityWeight = {'High': 3, 'Medium': 2, 'Low': 1};
+          visibleTasks.sort((a, b) {
+            final wA = priorityWeight[a.priority] ?? 0;
+            final wB = priorityWeight[b.priority] ?? 0;
+            return wB.compareTo(wA); // Descending
+          });
+        } else if (_taskSortOption == 'DueDate') {
+          visibleTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        }
 
         return Padding(
           padding: const EdgeInsets.all(20),
@@ -828,7 +843,28 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       color: cs.onSurface,
                     ),
                   ),
-                  Icon(Icons.sort, color: cs.onSurface),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.sort, color: cs.onSurface),
+                    onSelected: (value) {
+                      setState(() {
+                        _taskSortOption = value;
+                      });
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'None',
+                        child: Text('Default Order'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'Priority',
+                        child: Text('Priority (High to Low)'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'DueDate',
+                        child: Text('Due Date (Earliest First)'),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -843,55 +879,54 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 ),
                 const SizedBox(height: 40),
               ] else ...[
-                ...visibleTasks.map(
-                  (task) {
-                    final isAssignedToMe = task.assignedTo == userEmail;
-                    return GestureDetector(
-                      onTap: () {
-                        TaskDetailBottomSheet.show(
-                          context,
-                          task,
-                          canEdit: canEdit,
-                          canMarkComplete: canEdit || isAssignedToMe,
-                          canComment: true, // Viewers can comment on tasks they can see
-                          onDelete: canEdit
-                              ? () {
-                                  context.read<ProjectManager>().deleteTask(
-                                    projectName,
-                                    task,
-                                  );
-                                }
-                              : null,
-                          onUpdate: (canEdit || isAssignedToMe)
-                              ? (updatedTask) {
-                                  context.read<ProjectManager>().updateTask(
-                                    projectName,
-                                    task,
-                                    updatedTask,
-                                  );
-                                }
-                              : null,
-                          onComment: (commentText) {
-                            final userManager = context.read<UserManager>();
-                            final newComment = Comment(
-                              id: UniqueKey().toString(),
-                              authorEmail: userManager.email,
-                              authorName: userManager.name,
-                              text: commentText,
-                              timestamp: DateTime.now(),
-                            );
-                            context.read<ProjectManager>().addTaskComment(
-                              projectName,
-                              task,
-                              newComment,
-                            );
-                          },
-                        );
-                      },
-                      child: _buildTaskCard(task),
-                    );
-                  },
-                ).toList(),
+                ...visibleTasks.map((task) {
+                  final isAssignedToMe = task.assignedTo == userEmail;
+                  return GestureDetector(
+                    onTap: () {
+                      TaskDetailBottomSheet.show(
+                        context,
+                        task,
+                        canEdit: canEdit,
+                        canMarkComplete: canEdit || isAssignedToMe,
+                        canComment:
+                            true, // Viewers can comment on tasks they can see
+                        onDelete: canEdit
+                            ? () {
+                                context.read<ProjectManager>().deleteTask(
+                                  projectName,
+                                  task,
+                                );
+                              }
+                            : null,
+                        onUpdate: (canEdit || isAssignedToMe)
+                            ? (updatedTask) {
+                                context.read<ProjectManager>().updateTask(
+                                  projectName,
+                                  task,
+                                  updatedTask,
+                                );
+                              }
+                            : null,
+                        onComment: (commentText) {
+                          final userManager = context.read<UserManager>();
+                          final newComment = Comment(
+                            id: UniqueKey().toString(),
+                            authorEmail: userManager.email,
+                            authorName: userManager.name,
+                            text: commentText,
+                            timestamp: DateTime.now(),
+                          );
+                          context.read<ProjectManager>().addTaskComment(
+                            projectName,
+                            task,
+                            newComment,
+                          );
+                        },
+                      );
+                    },
+                    child: _buildTaskCard(task),
+                  );
+                }),
               ],
             ],
           ),
@@ -1193,7 +1228,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       roleLabel: project.memberRoles[email] ?? 'Editor',
                       canEditRole: false, // Cannot edit role while pending
                       isPending: true,
-                      onRemove: (project.ownerId == FirebaseAuth.instance.currentUser?.uid || project.ownerEmail == userEmail)
+                      onRemove:
+                          (project.ownerId ==
+                                  FirebaseAuth.instance.currentUser?.uid ||
+                              project.ownerEmail == userEmail)
                           ? () {
                               _confirmRemoveMember(context, projectName, email);
                             }
@@ -1223,10 +1261,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           ? 'Loading...'
                           : (_memberNamesMap[email] ?? 'Rejected User'),
                       email,
-                      roleLabel: 'Review', // Re-use styling, but label looks like reviewer or something
+                      roleLabel:
+                          'Review', // Re-use styling, but label looks like reviewer or something
                       canEditRole: false,
                       isRejected: true,
-                      onRemove: (project.ownerId == FirebaseAuth.instance.currentUser?.uid || project.ownerEmail == userEmail)
+                      onRemove:
+                          (project.ownerId ==
+                                  FirebaseAuth.instance.currentUser?.uid ||
+                              project.ownerEmail == userEmail)
                           ? () {
                               _confirmRemoveMember(context, projectName, email);
                             }
@@ -1288,7 +1330,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       color: isRejected ? Colors.red : cs.onSurface,
       decoration: isRejected ? TextDecoration.lineThrough : null,
     );
-    final statusText = isPending ? ' (Pending)' : isRejected ? ' (Rejected)' : '';
+    final statusText = isPending
+        ? ' (Pending)'
+        : isRejected
+        ? ' (Rejected)'
+        : '';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1316,10 +1362,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$name$statusText',
-                  style: nameStyle,
-                ),
+                Text('$name$statusText', style: nameStyle),
                 Text(
                   email,
                   style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),

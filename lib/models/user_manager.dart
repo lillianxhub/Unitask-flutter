@@ -50,7 +50,7 @@ class UserManager extends ChangeNotifier {
         'uid': user.uid,
         'email': user.email ?? '',
         'name': user.displayName ?? user.email?.split('@')[0] ?? 'User',
-        if (fcmToken != null) 'fcmToken': fcmToken,
+        'fcmToken': ?fcmToken,
       }, SetOptions(merge: true));
     } catch (e) {
       if (kDebugMode) print('Error saving user to Firestore: $e');
@@ -153,8 +153,7 @@ class UserManager extends ChangeNotifier {
         final GoogleSignInAccount googleUser = await GoogleSignIn.instance
             .authenticate();
 
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,
         );
