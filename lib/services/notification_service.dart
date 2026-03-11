@@ -72,11 +72,15 @@ class NotificationService {
   /// Load the service account JSON from Flutter assets (returns null if not found).
   static Future<Map<String, dynamic>?> _loadServiceAccount() async {
     try {
-      final jsonStr = await rootBundle.loadString('assets/service_account.json');
+      final jsonStr = await rootBundle.loadString(
+        'assets/service_account.json',
+      );
       return jsonDecode(jsonStr) as Map<String, dynamic>;
     } catch (e) {
       if (kDebugMode) {
-        print('No service_account.json found. Push notifications will be disabled locally.');
+        print(
+          'No service_account.json found. Push notifications will be disabled locally.',
+        );
       }
       return null;
     }
@@ -98,7 +102,7 @@ class NotificationService {
     if (sa == null) {
       return null; // Silent failure for teammates without the file
     }
-    
+
     final privateKeyPem = sa['private_key'] as String;
     final clientEmail = sa['client_email'] as String;
 
@@ -152,10 +156,12 @@ class NotificationService {
   }) async {
     try {
       final accessToken = await _getAccessToken();
-      
+
       if (accessToken == null) {
         if (kDebugMode) {
-          print('Skipping push notification send: No access token due to missing service_account.json');
+          print(
+            'Skipping push notification send: No access token due to missing service_account.json',
+          );
         }
         return;
       }
@@ -168,7 +174,7 @@ class NotificationService {
             'priority': 'high',
             'notification': {'sound': 'default'},
           },
-          if (data != null) 'data': data,
+          'data': ?data,
         },
       };
 

@@ -232,7 +232,7 @@ class SettingsScreen extends StatelessWidget {
       trailing: Switch(
         value: themeManager.isDarkMode,
         onChanged: (_) => themeManager.toggleTheme(),
-        activeColor: cs.primary,
+        activeThumbColor: cs.primary,
       ),
       onTap: () => themeManager.toggleTheme(),
     );

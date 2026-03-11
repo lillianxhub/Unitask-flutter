@@ -323,7 +323,12 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildStatusPill(project.status),
+                  Row(
+                    children: [
+                      _buildStatusPill(project.status),
+                      _buildPriorityCountBadge(project),
+                    ],
+                  ),
                   Text(
                     '${project.progress}%',
                     style: TextStyle(
@@ -402,6 +407,45 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityCountBadge(Project project) {
+    if (_selectedPriority == 'All') return const SizedBox.shrink();
+
+    int count = project.tasks.where((t) => t.priority == _selectedPriority && !t.isCompleted).length;
+    if (count == 0) return const SizedBox.shrink();
+
+    Color color;
+    switch (_selectedPriority.toLowerCase()) {
+      case 'high':
+        color = Colors.red;
+        break;
+      case 'medium':
+        color = Colors.orange;
+        break;
+      case 'low':
+        color = Colors.green;
+        break;
+      default:
+        color = Colors.grey;
+    }
+
+    return Container(
+      margin: EdgeInsets.only(left: 8 * _s),
+      padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 4 * _s),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        '$count $_selectedPriority',
+        style: TextStyle(
+          fontSize: 11 * _s,
+          fontWeight: FontWeight.w600,
+          color: color,
         ),
       ),
     );
