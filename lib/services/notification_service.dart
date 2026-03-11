@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -18,6 +19,15 @@ class NotificationService {
   static final NotificationService instance = NotificationService._();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+    'high_importance_channel', // id
+    'High Importance Notifications', // title
+    description: 'This channel is used for important notifications.', // description
+    importance: Importance.max,
+  );
 
   // FCM V1 API constants
   static const String _projectId = 'unitask-app';
@@ -37,12 +47,58 @@ class NotificationService {
     // Request permission from the user
     await _fcm.requestPermission(alert: true, badge: true, sound: true);
 
-    // Handle foreground messages — just print in debug for now.
+    // Initialize local notifications for Android
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    
+    await _localNotifications.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (kDebugMode) print('Foreground notification tapped: ${response.payload}');
+      },
+    );
+
+    // Create the channel on Android
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(_channel);
+
+    // Handle foreground messages
     // FCM automatically shows a notification when the app is in background/terminated.
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (kDebugMode) {
         print(
           'Foreground FCM message: ${message.notification?.title} - ${message.notification?.body}',
+        );
+      }
+
+      final notification = message.notification;
+      final android = message.notification?.android;
+
+      // If `onMessage` is triggered with a notification, construct our own
+      // local notification to show to users using the created channel.
+      if (notification != null && android != null) {
+        _localNotifications.show(
+          id: notification.hashCode,
+          title: notification.title,
+          body: notification.body,
+          notificationDetails: const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'high_importance_channel',
+              'High Importance Notifications',
+              channelDescription: 'This channel is used for important notifications.',
+              icon: '@mipmap/ic_launcher',
+              importance: Importance.max,
+              priority: Priority.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+          ),
+          payload: jsonEncode(message.data),
         );
       }
     });
