@@ -30,29 +30,16 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header & Segmented Control
+            // Header
             Padding(
               padding: EdgeInsets.only(left: 20 * _s, top: 20 * _s, right: 20 * _s),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'My Dashboard',
-                        style: TextStyle(
-                          fontSize: 28 * _s,
-                          fontWeight: FontWeight.bold,
-                          color: cs.onSurface,
-                        ),
-                      ),
-                      _buildPriorityDropdown(cs),
-                    ],
-                  ),
-                  SizedBox(height: 16 * _s),
-                  _buildSegmentedControl(cs),
-                ],
+              child: Text(
+                'My Dashboard',
+                style: TextStyle(
+                  fontSize: 28 * _s,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
               ),
             ),
             SizedBox(height: 16 * _s),
@@ -129,6 +116,18 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                     ),
                   );
                 }),
+              ),
+            ),
+            SizedBox(height: 16 * _s),
+            // Segmented Control & Priority Dropdown
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20 * _s),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSegmentedControl(cs),
+                  _buildPriorityDropdown(cs),
+                ],
               ),
             ),
             SizedBox(height: 16 * _s),
@@ -434,7 +433,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildSegmentButton('Projects', 0, cs),
-          _buildSegmentButton('My Tasks', 1, cs),
+          _buildSegmentButton('Task', 1, cs),
         ],
       ),
     );
@@ -604,6 +603,8 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                       ),
                     ),
                   ),
+                  SizedBox(width: 8 * _s),
+                  _buildPriorityBadge(task.priority),
                 ],
               ),
               SizedBox(height: 8 * _s),
@@ -671,6 +672,38 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPriorityBadge(String priority) {
+    Color color;
+    switch (priority.toLowerCase()) {
+      case 'high':
+        color = Colors.red;
+        break;
+      case 'medium':
+        color = Colors.orange;
+        break;
+      case 'low':
+        color = Colors.green;
+        break;
+      default:
+        color = Colors.grey;
+    }
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8 * _s, vertical: 4 * _s),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        priority,
+        style: TextStyle(
+          fontSize: 11 * _s,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 
