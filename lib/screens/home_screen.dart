@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
 import '../models/locale_manager.dart';
 import '../widgets/app_floating_action_button.dart';
+import '../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +24,53 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedTaskFilter; // 'Total', 'Doing', or 'Done'
   String _selectedPriority = 'All'; // Priority Filter
   bool _showAllContent = false;
+
+  bool _hasCheckedDueDates = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check due dates once after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _triggerDueDateReminders();
+    });
+  }
+
+  void _triggerDueDateReminders() {
+    if (_hasCheckedDueDates) return;
+    final manager = context.read<ProjectManager>();
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
+    if (userEmail == null) return;
+
+    final projects = manager.projects;
+    if (projects.isEmpty) {
+      // Projects not loaded yet, try again after a short delay
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) _triggerDueDateReminders();
+      });
+      return;
+    }
+
+    _hasCheckedDueDates = true;
+
+    final List<Map<String, dynamic>> userTasks = [];
+    for (final project in projects) {
+      for (final task in project.tasks) {
+        if (task.assignedTo == userEmail) {
+          userTasks.add({
+            'title': task.title,
+            'projectName': project.name,
+            'dueDate': task.dueDate,
+            'isCompleted': task.isCompleted,
+          });
+        }
+      }
+    }
+
+    if (userTasks.isNotEmpty) {
+      NotificationService.instance.checkDueDateReminders(userTasks: userTasks);
+    }
+  }
 
   @override
   void dispose() {
@@ -93,60 +141,79 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (_searchQuery.isNotEmpty) {
                     return _buildSearchResults(projects);
                   }
-                        final userEmail = FirebaseAuth.instance.currentUser?.email ?? 'guest@unitask.com';
+                  final userEmail =
+                      FirebaseAuth.instance.currentUser?.email ??
+                      'guest@unitask.com';
 
-                        return SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildMyTasksSummary(projects, userEmail),
-                              if (_selectedTaskFilter != null)
-                                _buildFilteredTasksList(projects, userEmail),
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildMyTasksSummary(projects, userEmail),
+                        if (_selectedTaskFilter != null)
+                          _buildFilteredTasksList(projects, userEmail),
 
-                              const SizedBox(height: 24),
-                              
-                              Center(
-                                child: TextButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      _showAllContent = !_showAllContent;
-                                    });
-                                  },
-                                  icon: Icon(_showAllContent ? Icons.visibility_off : Icons.visibility),
-                                  label: Text(
-                                    _showAllContent ? 'Hide Dashboard' : 'View Projects & Upcoming',
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Theme.of(context).colorScheme.primary,
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                      side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
-                                    ),
-                                  ),
+                        const SizedBox(height: 24),
+
+                        Center(
+                          child: TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _showAllContent = !_showAllContent;
+                              });
+                            },
+                            icon: Icon(
+                              _showAllContent
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            label: Text(
+                              _showAllContent
+                                  ? 'Hide Dashboard'
+                                  : 'View Projects & Upcoming',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.2),
                                 ),
                               ),
-                              const SizedBox(height: 16),
-
-                              if (_showAllContent) ...[
-                                _buildDueDateHeader(),
-                                const SizedBox(height: 16),
-                                _buildUpcomingTasksList(projects),
-                                const SizedBox(height: 28),
-                                _buildProjectSectionHeader(),
-                                const SizedBox(height: 8),
-                                Column(
-                                  children: projects
-                                      .map((p) => _buildProjectCard(p))
-                                      .toList(),
-                                ),
-                              ],
-                            ],
+                            ),
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(height: 16),
+
+                        if (_showAllContent) ...[
+                          _buildDueDateHeader(),
+                          const SizedBox(height: 16),
+                          _buildUpcomingTasksList(projects),
+                          const SizedBox(height: 28),
+                          _buildProjectSectionHeader(),
+                          const SizedBox(height: 8),
+                          Column(
+                            children: projects
+                                .map((p) => _buildProjectCard(p))
+                                .toList(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -552,11 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.calendar_today,
-          size: 14,
-          color: color,
-        ),
+        Icon(Icons.calendar_today, size: 14, color: color),
         const SizedBox(width: 4),
         Text(
           text,
@@ -579,8 +642,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     for (var project in projects) {
       for (var task in project.tasks) {
-        if (task.assignedTo == userEmail && 
-            (_selectedPriority == 'All' || task.priority == _selectedPriority)) {
+        if (task.assignedTo == userEmail &&
+            (_selectedPriority == 'All' ||
+                task.priority == _selectedPriority)) {
           totalAssigned++;
           if (task.isCompleted) {
             completed++;
@@ -592,7 +656,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Keep UI visible even if the user has no tasks assigned at all yet
-    
+
     final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,11 +678,32 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildSummaryBox('Total', totalAssigned.toString(), Icons.assignment_outlined, cs.primary)),
+            Expanded(
+              child: _buildSummaryBox(
+                'Total',
+                totalAssigned.toString(),
+                Icons.assignment_outlined,
+                cs.primary,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildSummaryBox('Doing', doing.toString(), Icons.hourglass_empty, Colors.orange)),
+            Expanded(
+              child: _buildSummaryBox(
+                'Doing',
+                doing.toString(),
+                Icons.hourglass_empty,
+                Colors.orange,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildSummaryBox('Done', completed.toString(), Icons.check_circle_outline, Colors.green)),
+            Expanded(
+              child: _buildSummaryBox(
+                'Done',
+                completed.toString(),
+                Icons.check_circle_outline,
+                Colors.green,
+              ),
+            ),
           ],
         ),
       ],
@@ -627,11 +712,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFilteredTasksList(List<Project> projects, String userEmail) {
     List<Map<String, dynamic>> filteredTasks = [];
-    
+
     for (var project in projects) {
       for (var task in project.tasks) {
         if (task.assignedTo == userEmail &&
-            (_selectedPriority == 'All' || task.priority == _selectedPriority)) {
+            (_selectedPriority == 'All' ||
+                task.priority == _selectedPriority)) {
           if (_selectedTaskFilter == 'Total') {
             filteredTasks.add({'task': task, 'project': project});
           } else if (_selectedTaskFilter == 'Doing' && !task.isCompleted) {
@@ -669,16 +755,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 8),
         ...filteredTasks.map(
-          (t) => _buildSearchTaskCard(
-            t['task'] as Task,
-            t['project'] as Project,
-          ),
+          (t) =>
+              _buildSearchTaskCard(t['task'] as Task, t['project'] as Project),
         ),
       ],
     );
   }
 
-  Widget _buildSummaryBox(String title, String count, IconData icon, Color color) {
+  Widget _buildSummaryBox(
+    String title,
+    String count,
+    IconData icon,
+    Color color,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final isSelected = _selectedTaskFilter == title;
 
@@ -700,10 +789,12 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? color.withValues(alpha: 0.2) : color.withValues(alpha: 0.05),
+              color: isSelected
+                  ? color.withValues(alpha: 0.2)
+                  : color.withValues(alpha: 0.05),
               blurRadius: isSelected ? 12 : 6,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
           border: Border.all(
             color: isSelected ? color : color.withValues(alpha: 0.2),
@@ -711,34 +802,35 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color, size: 24),
-              Text(
-                count,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: color, size: 24),
+                Text(
+                  count,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: cs.onSurface.withValues(alpha: 0.6),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildDueDateHeader() {
@@ -759,7 +851,8 @@ class _HomeScreenState extends State<HomeScreen> {
     for (var project in projects) {
       for (var task in project.tasks) {
         if (!task.isCompleted &&
-            (_selectedPriority == 'All' || task.priority == _selectedPriority)) {
+            (_selectedPriority == 'All' ||
+                task.priority == _selectedPriority)) {
           allTasks.add({'task': task, 'project': project});
         }
       }
@@ -915,11 +1008,12 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           items: <String>['All', 'High', 'Medium', 'Low']
               .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              })
+              .toList(),
         ),
       ),
     );

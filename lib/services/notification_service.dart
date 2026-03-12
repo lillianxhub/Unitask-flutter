@@ -109,6 +109,65 @@ class NotificationService {
     });
   }
 
+  // ─── Due Date Reminders (Client-Side) ────────────────────────────────────────
+
+  /// Check for tasks due today or tomorrow and show local notifications.
+  /// Call this after the user's projects have loaded.
+  Future<void> checkDueDateReminders({
+    required List<Map<String, dynamic>> userTasks,
+  }) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    int notifId = 9000; // Start from a high ID to avoid collisions
+
+    for (final taskInfo in userTasks) {
+      final String taskTitle = taskInfo['title'] ?? '';
+      final String projectName = taskInfo['projectName'] ?? '';
+      final DateTime dueDate = taskInfo['dueDate'] as DateTime;
+      final bool isCompleted = taskInfo['isCompleted'] ?? false;
+
+      if (isCompleted) continue;
+
+      final dueDateOnly = DateTime(dueDate.year, dueDate.month, dueDate.day);
+
+      String? title;
+      String? body;
+
+      if (dueDateOnly.isAtSameMomentAs(today)) {
+        title = '⏰ งานครบกำหนดวันนี้!';
+        body = '"$taskTitle" ในโปรเจค "$projectName" ครบกำหนดวันนี้';
+      } else if (dueDateOnly.isAtSameMomentAs(tomorrow)) {
+        title = '📅 งานครบกำหนดพรุ่งนี้';
+        body = '"$taskTitle" ในโปรเจค "$projectName" ครบกำหนดพรุ่งนี้';
+      } else if (dueDateOnly.isBefore(today)) {
+        title = '🚨 งานเลยกำหนดแล้ว!';
+        body = '"$taskTitle" ในโปรเจค "$projectName" เลยกำหนดส่งแล้ว';
+      }
+
+      if (title != null && body != null) {
+        await _localNotifications.show(
+          id: notifId++,
+          title: title,
+          body: body,
+          notificationDetails: const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'due_date_reminders',
+              'Due Date Reminders',
+              channelDescription: 'Reminders for tasks due today, tomorrow, or overdue.',
+              icon: '@mipmap/ic_launcher',
+              importance: Importance.high,
+              priority: Priority.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   // ─── FCM Token ──────────────────────────────────────────────────────────────
 
   /// Get this device's FCM token (needed to send notifications TO this device).
