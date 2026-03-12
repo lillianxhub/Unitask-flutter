@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.example.unitask_flutter"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
