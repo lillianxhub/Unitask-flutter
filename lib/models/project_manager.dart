@@ -264,6 +264,28 @@ class ProjectManager extends ChangeNotifier {
         }
         await batch.commit();
 
+        // Send push notification to the assigned user
+        if (task.assignedTo != null && task.assignedTo!.isNotEmpty && task.assignedTo != senderEmail) {
+          _sendPushToUserByEmail(
+            recipientEmail: task.assignedTo!,
+            title: '📋 มีงานใหม่!',
+            body: '${task.title} ถูกมอบหมายให้คุณใน "${project.name}"',
+            data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
+          );
+        }
+
+        // Also push to all other members about new task
+        for (final memberEmail in project.members) {
+          if (memberEmail != senderEmail && memberEmail != task.assignedTo) {
+            _sendPushToUserByEmail(
+              recipientEmail: memberEmail,
+              title: '📋 งานใหม่ใน "${project.name}"',
+              body: '$senderName เพิ่มงาน: ${task.title}',
+              data: {'type': 'task_new', 'projectId': project.id ?? ''},
+            );
+          }
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -393,6 +415,72 @@ class ProjectManager extends ChangeNotifier {
               .collection('projects')
               .doc(project.id)
               .update({'tasks': project.tasks.map((t) => t.toJson()).toList()});
+
+          final senderEmail =
+              FirebaseAuth.instance.currentUser?.email ?? 'System';
+          final senderName = FirebaseAuth.instance.currentUser?.displayName ??
+              senderEmail.split('@').first;
+
+          // Task completed notification
+          if (!oldTask.isCompleted && newTask.isCompleted) {
+            final batch = FirebaseFirestore.instance.batch();
+            final notificationsRef =
+                FirebaseFirestore.instance.collection('notifications');
+
+            for (final memberEmail in project.members) {
+              if (memberEmail != senderEmail) {
+                final docRef = notificationsRef.doc();
+                batch.set(docRef, {
+                  'id': docRef.id,
+                  'recipientEmail': memberEmail,
+                  'projectId': project.id,
+                  'projectName': project.name,
+                  'senderName': senderName,
+                  'senderEmail': senderEmail,
+                  'type': 'task_completed',
+                  'text': 'completed task: ${newTask.title}',
+                  'timestamp': FieldValue.serverTimestamp(),
+                  'isRead': false,
+                });
+
+                _sendPushToUserByEmail(
+                  recipientEmail: memberEmail,
+                  title: '✅ งานเสร็จแล้ว!',
+                  body: '$senderName ทำงาน "${newTask.title}" เสร็จแล้วในโปรเจค "${project.name}"',
+                  data: {'type': 'task_completed', 'projectId': project.id ?? ''},
+                );
+              }
+            }
+            await batch.commit();
+          }
+
+          // Task reassignment notification
+          if (oldTask.assignedTo != newTask.assignedTo &&
+              newTask.assignedTo != null &&
+              newTask.assignedTo!.isNotEmpty &&
+              newTask.assignedTo != senderEmail) {
+            final notifDocRef =
+                FirebaseFirestore.instance.collection('notifications').doc();
+            await notifDocRef.set({
+              'id': notifDocRef.id,
+              'recipientEmail': newTask.assignedTo,
+              'projectId': project.id,
+              'projectName': project.name,
+              'senderName': senderName,
+              'senderEmail': senderEmail,
+              'type': 'task_assigned',
+              'text': 'assigned task "${newTask.title}" to you',
+              'timestamp': FieldValue.serverTimestamp(),
+              'isRead': false,
+            });
+
+            _sendPushToUserByEmail(
+              recipientEmail: newTask.assignedTo!,
+              title: '📋 มีงานมอบหมายให้คุณ!',
+              body: '$senderName มอบหมายงาน "${newTask.title}" ให้คุณในโปรเจค "${project.name}"',
+              data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
+            );
+          }
         }
       }
     } catch (e) {
@@ -459,6 +547,18 @@ class ProjectManager extends ChangeNotifier {
         }
         await batch.commit();
 
+        // Send push to all members about the task comment
+        for (final memberEmail in project.members) {
+          if (memberEmail != comment.authorEmail) {
+            _sendPushToUserByEmail(
+              recipientEmail: memberEmail,
+              title: '💬 ความคิดเห็นใหม่',
+              body: '${comment.authorName} แสดงความคิดเห็นในงาน "${task.title}" ของโปรเจค "${project.name}"',
+              data: {'type': 'task_comment', 'projectId': project.id ?? ''},
+            );
+          }
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -512,6 +612,18 @@ class ProjectManager extends ChangeNotifier {
           }
         }
         await batch.commit();
+
+        // Send push to all members about the project comment
+        for (final memberEmail in project.members) {
+          if (memberEmail != comment.authorEmail) {
+            _sendPushToUserByEmail(
+              recipientEmail: memberEmail,
+              title: '💬 ความคิดเห็นใหม่',
+              body: '${comment.authorName} แสดงความคิดเห็นในโปรเจค "${project.name}"',
+              data: {'type': 'project_comment', 'projectId': project.id ?? ''},
+            );
+          }
+        }
 
         notifyListeners();
       }
@@ -626,8 +738,25 @@ class ProjectManager extends ChangeNotifier {
             FirebaseAuth.instance.currentUser?.displayName ??
             userEmail.split('@').first;
 
-        // Send push notification to the project owner
+        // Create Firestore notification for the project owner
         if (project.ownerEmail.isNotEmpty) {
+          final notifDocRef = FirebaseFirestore.instance
+              .collection('notifications')
+              .doc();
+          await notifDocRef.set({
+            'id': notifDocRef.id,
+            'recipientEmail': project.ownerEmail,
+            'projectId': project.id,
+            'projectName': project.name,
+            'senderName': acceptingUserName,
+            'senderEmail': userEmail,
+            'type': 'accept',
+            'text': 'accepted invitation and joined the project',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
+
+          // Send push notification to the project owner
           _sendPushToUserByEmail(
             recipientEmail: project.ownerEmail,
             title: '✅ ตอบรับคำเชิญแล้ว!',
