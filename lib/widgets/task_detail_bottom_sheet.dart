@@ -6,6 +6,7 @@ class TaskDetailBottomSheet extends StatefulWidget {
   final bool canEdit;
   final bool canMarkComplete;
   final bool canComment;
+  final List<String> members;
   final VoidCallback? onDelete;
   final ValueChanged<Task>? onUpdate;
   final ValueChanged<String>? onComment;
@@ -16,6 +17,7 @@ class TaskDetailBottomSheet extends StatefulWidget {
     this.canEdit = false,
     this.canMarkComplete = false,
     this.canComment = false,
+    this.members = const [],
     this.onDelete,
     this.onUpdate,
     this.onComment,
@@ -27,6 +29,7 @@ class TaskDetailBottomSheet extends StatefulWidget {
     bool canEdit = false,
     bool canMarkComplete = false,
     bool canComment = false,
+    List<String> members = const [],
     VoidCallback? onDelete,
     ValueChanged<Task>? onUpdate,
     ValueChanged<String>? onComment,
@@ -49,6 +52,7 @@ class TaskDetailBottomSheet extends StatefulWidget {
             canEdit: canEdit,
             canMarkComplete: canMarkComplete,
             canComment: canComment,
+            members: members,
             onDelete: onDelete,
             onUpdate: onUpdate,
             onComment: onComment,
@@ -64,30 +68,36 @@ class TaskDetailBottomSheet extends StatefulWidget {
 
 class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
   final TextEditingController _commentController = TextEditingController();
+  late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late bool _isCompleted;
   late DateTime _dueDate;
   late String _priority;
+  late String? _assignedTo;
 
   @override
   void initState() {
     super.initState();
     _isCompleted = widget.task.isCompleted;
+    _titleController = TextEditingController(text: widget.task.title);
     _descriptionController = TextEditingController(
       text: widget.task.description,
     );
     _dueDate = widget.task.dueDate;
     _priority = widget.task.priority;
+    _assignedTo = widget.task.assignedTo;
   }
 
   void _updateTask() {
     if (widget.onUpdate != null) {
       final updatedTask = Task(
-        title: widget.task.title,
+        title: _titleController.text.trim().isNotEmpty
+            ? _titleController.text.trim()
+            : widget.task.title,
         description: _descriptionController.text.trim(),
         dueDate: _dueDate,
         createdDate: widget.task.createdDate,
-        assignedTo: widget.task.assignedTo,
+        assignedTo: _assignedTo,
         priority: _priority,
         isCompleted: _isCompleted,
         comments: List.from(widget.task.comments),
@@ -114,6 +124,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
   @override
   void dispose() {
     _commentController.dispose();
+    _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -142,13 +153,35 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Text(
-                  widget.task.title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: widget.canEdit
+                    ? Focus(
+                        onFocusChange: (hasFocus) {
+                          if (!hasFocus) _updateTask();
+                        },
+                        child: TextField(
+                          controller: _titleController,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Task title',
+                            hintStyle: TextStyle(
+                              color: cs.onSurface.withValues(alpha: 0.4),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        widget.task.title,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
               if (widget.canMarkComplete || widget.canEdit)
                 Checkbox(
@@ -286,6 +319,86 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
               ),
             ],
           ),
+          // Assigned To section
+          if (widget.canEdit && widget.members.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 20,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Assigned to: ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+                Expanded(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: widget.members.contains(_assignedTo)
+                          ? _assignedTo
+                          : null,
+                      hint: Text(
+                        'Not assigned',
+                        style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                          fontSize: 14,
+                        ),
+                      ),
+                      isDense: true,
+                      icon: Icon(
+                        Icons.arrow_drop_down,
+                        color: cs.onSurface,
+                      ),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurface.withValues(alpha: 0.8),
+                      ),
+                      items: widget.members
+                          .map((m) => DropdownMenuItem(
+                                value: m,
+                                child: Text(
+                                  m,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _assignedTo = val;
+                        });
+                        _updateTask();
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else if (_assignedTo != null && _assignedTo!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 20,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Assigned to: $_assignedTo',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 32),
           const Text(
             'Comments',

@@ -890,6 +890,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         canMarkComplete: canEdit || isAssignedToMe,
                         canComment:
                             true, // Viewers can comment on tasks they can see
+                        members: project.members,
                         onDelete: canEdit
                             ? () {
                                 context.read<ProjectManager>().deleteTask(
