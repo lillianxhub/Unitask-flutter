@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/task.dart';
 
 class TaskDetailBottomSheet extends StatefulWidget {
@@ -70,15 +71,14 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
   final TextEditingController _commentController = TextEditingController();
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
-  late bool _isCompleted;
   late DateTime _dueDate;
   late String _priority;
   late List<String> _assignedTo;
+  late List<String> _completedBy;
 
   @override
   void initState() {
     super.initState();
-    _isCompleted = widget.task.isCompleted;
     _titleController = TextEditingController(text: widget.task.title);
     _descriptionController = TextEditingController(
       text: widget.task.description,
@@ -86,6 +86,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
     _dueDate = widget.task.dueDate;
     _priority = widget.task.priority;
     _assignedTo = List<String>.from(widget.task.assignedTo);
+    _completedBy = List<String>.from(widget.task.completedBy);
   }
 
   void _updateTask() {
@@ -98,12 +99,27 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
         dueDate: _dueDate,
         createdDate: widget.task.createdDate,
         assignedTo: List<String>.from(_assignedTo),
+        completedBy: List<String>.from(_completedBy),
         priority: _priority,
-        isCompleted: _isCompleted,
         comments: List.from(widget.task.comments),
       );
       widget.onUpdate!(updatedTask);
     }
+  }
+
+  String get _currentUserEmail {
+    return FirebaseAuth.instance.currentUser?.email ?? '';
+  }
+
+  double get _progress {
+    if (_assignedTo.isEmpty) return 0.0;
+    final done = _assignedTo.where((e) => _completedBy.contains(e)).length;
+    return done / _assignedTo.length;
+  }
+
+  bool get _isFullyCompleted {
+    if (_assignedTo.isEmpty) return false;
+    return _assignedTo.every((e) => _completedBy.contains(e));
   }
 
   Future<void> _pickDate() async {
@@ -183,25 +199,46 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                         ),
                       ),
               ),
-              if (widget.canMarkComplete || widget.canEdit)
-                Checkbox(
-                  value: _isCompleted,
-                  activeColor: const Color(0xFFCFBDF6),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _isCompleted = val;
-                      });
-                      if (widget.onUpdate != null) {
-                        _updateTask();
-                      }
-                    }
-                  },
-                )
-              else if (_isCompleted)
-                const Icon(Icons.check_circle, color: Color(0xFFCFBDF6)),
+              if (_isFullyCompleted)
+                const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 28)
+              else if (_assignedTo.isNotEmpty)
+                Text(
+                  '${_assignedTo.where((e) => _completedBy.contains(e)).length}/${_assignedTo.length}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
+                ),
             ],
           ),
+          // Progress bar
+          if (_assignedTo.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: _progress,
+                minHeight: 6,
+                backgroundColor: cs.onSurface.withValues(alpha: 0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  _isFullyCompleted ? const Color(0xFF4CAF50) : cs.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isFullyCompleted
+                  ? 'All members completed ✅'
+                  : '${_assignedTo.where((e) => _completedBy.contains(e)).length} of ${_assignedTo.length} completed',
+              style: TextStyle(
+                fontSize: 12,
+                color: _isFullyCompleted
+                    ? const Color(0xFF4CAF50)
+                    : cs.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           if (widget.canEdit)
             Focus(
@@ -319,7 +356,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
               ),
             ],
           ),
-          // Assigned To section
+          // Assigned To section with per-person completion checkboxes
           if (widget.canEdit && widget.members.isNotEmpty) ...[
             const SizedBox(height: 16),
             Row(
@@ -339,35 +376,73 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                 ),
               ],
             ),
+            // Per-person completion checkboxes
             if (_assignedTo.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: _assignedTo.map((email) {
-                    return Chip(
-                      label: Text(
-                        email,
-                        style: TextStyle(fontSize: 12, color: cs.onSurface),
+              ..._assignedTo.map((email) {
+                final isDone = _completedBy.contains(email);
+                final isMe = email == _currentUserEmail;
+                final canToggle = widget.canEdit || isMe;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: isDone,
+                          activeColor: const Color(0xFF4CAF50),
+                          onChanged: canToggle
+                              ? (val) {
+                                  setState(() {
+                                    if (val == true) {
+                                      if (!_completedBy.contains(email)) {
+                                        _completedBy.add(email);
+                                      }
+                                    } else {
+                                      _completedBy.remove(email);
+                                    }
+                                  });
+                                  _updateTask();
+                                }
+                              : null,
+                        ),
                       ),
-                      deleteIcon: Icon(Icons.close, size: 16, color: cs.error),
-                      onDeleted: () {
-                        setState(() {
-                          _assignedTo.remove(email);
-                        });
-                        _updateTask();
-                      },
-                      backgroundColor: cs.surfaceContainerHighest,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isMe ? '$email (you)' : email,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: cs.onSurface,
+                            decoration: isDone ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ),
+                      if (isDone)
+                        const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 16)
+                      else
+                        Icon(Icons.radio_button_unchecked, color: cs.onSurface.withValues(alpha: 0.3), size: 16),
+                      if (widget.canEdit)
+                        IconButton(
+                          icon: Icon(Icons.close, size: 16, color: cs.error),
+                          onPressed: () {
+                            setState(() {
+                              _assignedTo.remove(email);
+                              _completedBy.remove(email);
+                            });
+                            _updateTask();
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                    ],
+                  ),
+                );
+              }),
             ],
+            // Dropdown to add more members
             if (widget.members.where((m) => !_assignedTo.contains(m)).isNotEmpty) ...[
               const SizedBox(height: 8),
               DropdownButtonHideUnderline(
@@ -414,26 +489,65 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                   color: cs.onSurface.withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: _assignedTo.map((email) {
-                      return Chip(
-                        label: Text(
-                          email,
-                          style: TextStyle(fontSize: 12, color: cs.onSurface),
-                        ),
-                        backgroundColor: cs.surfaceContainerHighest,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      );
-                    }).toList(),
+                Text(
+                  'Assigned to:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            // Per-person completion checkboxes (read-only or self-toggle for assignees)
+            ..._assignedTo.map((email) {
+              final isDone = _completedBy.contains(email);
+              final isMe = email == _currentUserEmail;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: isDone,
+                        activeColor: const Color(0xFF4CAF50),
+                        onChanged: isMe && widget.onUpdate != null
+                            ? (val) {
+                                setState(() {
+                                  if (val == true) {
+                                    if (!_completedBy.contains(email)) {
+                                      _completedBy.add(email);
+                                    }
+                                  } else {
+                                    _completedBy.remove(email);
+                                  }
+                                });
+                                _updateTask();
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isMe ? '$email (you)' : email,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: cs.onSurface,
+                          decoration: isDone ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                    if (isDone)
+                      const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 16)
+                    else
+                      Icon(Icons.radio_button_unchecked, color: cs.onSurface.withValues(alpha: 0.3), size: 16),
+                  ],
+                ),
+              );
+            }),
           ],
           const SizedBox(height: 32),
           const Text(
