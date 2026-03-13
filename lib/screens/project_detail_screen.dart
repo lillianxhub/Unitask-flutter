@@ -942,21 +942,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     String subtitle = task.description.isEmpty
         ? 'No description'
         : task.description;
-    String status = task.isCompleted ? 'Complete' : 'Doing';
+
+    // Progress-based status
+    String status;
     Color statusColor;
     Color statusBg;
-    switch (status) {
-      case 'Complete':
-        statusColor = const Color(0xFF2E7D32);
-        statusBg = const Color(0xFFE8F5E9);
-        break;
-      case 'Review':
-        statusColor = const Color(0xFFE65100);
-        statusBg = const Color(0xFFFFF3E0);
-        break;
-      default:
-        statusColor = const Color(0xFF1565C0);
-        statusBg = const Color(0xFFE3F2FD);
+    if (task.isCompleted) {
+      status = 'Complete';
+      statusColor = const Color(0xFF2E7D32);
+      statusBg = const Color(0xFFE8F5E9);
+    } else if (task.assignedTo.isNotEmpty && task.completedCount > 0) {
+      status = '${task.completedCount}/${task.assignedTo.length} Done';
+      statusColor = const Color(0xFFE65100);
+      statusBg = const Color(0xFFFFF3E0);
+    } else {
+      status = 'Doing';
+      statusColor = const Color(0xFF1565C0);
+      statusBg = const Color(0xFFE3F2FD);
     }
 
     Color priorityColor;
@@ -1020,7 +1022,24 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 color: cs.onSurface.withValues(alpha: 0.5),
               ),
             ),
-            const SizedBox(height: 12),
+            // Progress bar
+            if (task.assignedTo.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: task.progress,
+                  minHeight: 4,
+                  backgroundColor: cs.onSurface.withValues(alpha: 0.08),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    task.isCompleted
+                        ? const Color(0xFF4CAF50)
+                        : const Color(0xFFCFBDF6),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
             Row(
               children: [
                 Icon(
@@ -1062,13 +1081,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ),
                 if (task.assignedTo.isNotEmpty)
                   ...task.assignedTo.take(3).toList().asMap().entries.map((entry) {
-                    final idx = entry.key;
                     final email = entry.value;
+                    final isDone = task.completedBy.contains(email);
                     return Padding(
-                      padding: EdgeInsets.only(left: idx > 0 ? 0 : 0),
+                      padding: const EdgeInsets.only(left: 2),
                       child: CircleAvatar(
                         radius: 12,
-                        backgroundColor: const Color(0xFFCFBDF6),
+                        backgroundColor: isDone
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFCFBDF6),
                         child: Text(
                           email[0].toUpperCase(),
                           style: const TextStyle(
