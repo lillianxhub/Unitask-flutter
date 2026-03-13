@@ -176,12 +176,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                     List<Map<String, dynamic>> myTasks = [];
                     for (var project in projects) {
                       for (var task in project.tasks) {
-                        bool isAssigned = false;
-                        if (task.assignedTo is String) {
-                          isAssigned = task.assignedTo == userEmail;
-                        } else if (task.assignedTo is List) {
-                          isAssigned = (task.assignedTo as List).contains(userEmail);
-                        }
+                        bool isAssigned = task.assignedTo.contains(userEmail);
                         
                         if (isAssigned) {
                           myTasks.add({'task': task, 'project': project});
@@ -542,12 +537,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
       final userEmail = FirebaseAuth.instance.currentUser?.email ?? 'guest@unitask.com';
       for (var p in allProjects) {
         for (var t in p.tasks) {
-          bool isAssigned = false;
-          if (t.assignedTo is String) {
-            isAssigned = t.assignedTo == userEmail;
-          } else if (t.assignedTo is List) {
-            isAssigned = (t.assignedTo as List).contains(userEmail);
-          }
+          bool isAssigned = t.assignedTo.contains(userEmail);
 
           if (isAssigned) {
             total++;
