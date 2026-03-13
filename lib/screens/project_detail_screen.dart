@@ -91,7 +91,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   void _onTaskAdded(
     String name,
     String description,
-    String assignedTo,
+    List<String> assignedTo,
     String dueDate,
     String priority,
   ) {
@@ -120,7 +120,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       description: description,
       dueDate: parsedDueDate,
       createdDate: DateTime.now(),
-      assignedTo: assignedTo.isNotEmpty ? assignedTo : null,
+      assignedTo: assignedTo,
       priority: priority,
     );
 
@@ -814,7 +814,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         // Viewers only see tasks assigned to them
         List<Task> visibleTasks = canEdit
             ? List.from(tasks)
-            : tasks.where((t) => t.assignedTo == userEmail).toList();
+            : tasks.where((t) => t.assignedTo.contains(userEmail)).toList();
 
         if (_taskSortOption == 'Priority') {
           final priorityWeight = {'High': 3, 'Medium': 2, 'Low': 1};
@@ -880,7 +880,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 const SizedBox(height: 40),
               ] else ...[
                 ...visibleTasks.map((task) {
-                  final isAssignedToMe = task.assignedTo == userEmail;
+                  final isAssignedToMe = task.assignedTo.contains(userEmail);
                   return GestureDetector(
                     onTap: () {
                       TaskDetailBottomSheet.show(
@@ -1060,19 +1060,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       ),
                     ),
                   ),
-                if (task.assignedTo != null && task.assignedTo!.isNotEmpty)
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: const Color(0xFFCFBDF6),
-                    child: Text(
-                      task.assignedTo![0].toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                if (task.assignedTo.isNotEmpty)
+                  ...task.assignedTo.take(3).toList().asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final email = entry.value;
+                    return Padding(
+                      padding: EdgeInsets.only(left: idx > 0 ? 0 : 0),
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: const Color(0xFFCFBDF6),
+                        child: Text(
+                          email[0].toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  )
+                    );
+                  })
                 else
                   const CircleAvatar(
                     radius: 12,

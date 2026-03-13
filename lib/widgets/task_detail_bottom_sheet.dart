@@ -73,7 +73,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
   late bool _isCompleted;
   late DateTime _dueDate;
   late String _priority;
-  late String? _assignedTo;
+  late List<String> _assignedTo;
 
   @override
   void initState() {
@@ -85,7 +85,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
     );
     _dueDate = widget.task.dueDate;
     _priority = widget.task.priority;
-    _assignedTo = widget.task.assignedTo;
+    _assignedTo = List<String>.from(widget.task.assignedTo);
   }
 
   void _updateTask() {
@@ -97,7 +97,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
         description: _descriptionController.text.trim(),
         dueDate: _dueDate,
         createdDate: widget.task.createdDate,
-        assignedTo: _assignedTo,
+        assignedTo: List<String>.from(_assignedTo),
         priority: _priority,
         isCompleted: _isCompleted,
         comments: List.from(widget.task.comments),
@@ -331,55 +331,80 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Assigned to: ',
+                  'Assigned to:',
                   style: TextStyle(
                     fontSize: 14,
                     color: cs.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: widget.members.contains(_assignedTo)
-                          ? _assignedTo
-                          : null,
-                      hint: Text(
-                        'Not assigned',
-                        style: TextStyle(
-                          color: cs.onSurface.withValues(alpha: 0.4),
-                          fontSize: 14,
-                        ),
+              ],
+            ),
+            if (_assignedTo.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: _assignedTo.map((email) {
+                    return Chip(
+                      label: Text(
+                        email,
+                        style: TextStyle(fontSize: 12, color: cs.onSurface),
                       ),
-                      isDense: true,
-                      icon: Icon(
-                        Icons.arrow_drop_down,
-                        color: cs.onSurface,
-                      ),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: cs.onSurface.withValues(alpha: 0.8),
-                      ),
-                      items: widget.members
-                          .map((m) => DropdownMenuItem(
-                                value: m,
-                                child: Text(
-                                  m,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (val) {
+                      deleteIcon: Icon(Icons.close, size: 16, color: cs.error),
+                      onDeleted: () {
                         setState(() {
-                          _assignedTo = val;
+                          _assignedTo.remove(email);
                         });
                         _updateTask();
                       },
+                      backgroundColor: cs.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+            if (widget.members.where((m) => !_assignedTo.contains(m)).isNotEmpty) ...[
+              const SizedBox(height: 8),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: null,
+                  hint: Text(
+                    _assignedTo.isEmpty ? 'Select member' : 'Add another member',
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                      fontSize: 14,
                     ),
                   ),
+                  isDense: true,
+                  icon: Icon(Icons.arrow_drop_down, color: cs.onSurface),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onSurface.withValues(alpha: 0.8),
+                  ),
+                  items: widget.members
+                      .where((m) => !_assignedTo.contains(m))
+                      .map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(m, overflow: TextOverflow.ellipsis),
+                          ))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _assignedTo.add(val);
+                      });
+                      _updateTask();
+                    }
+                  },
                 ),
-              ],
-            ),
-          ] else if (_assignedTo != null && _assignedTo!.isNotEmpty) ...[
+              ),
+            ],
+          ] else if (_assignedTo.isNotEmpty) ...[
             const SizedBox(height: 16),
             Row(
               children: [
@@ -389,11 +414,22 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                   color: cs.onSurface.withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Assigned to: $_assignedTo',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: cs.onSurface.withValues(alpha: 0.7),
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: _assignedTo.map((email) {
+                      return Chip(
+                        label: Text(
+                          email,
+                          style: TextStyle(fontSize: 12, color: cs.onSurface),
+                        ),
+                        backgroundColor: cs.surfaceContainerHighest,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ],

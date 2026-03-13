@@ -264,19 +264,21 @@ class ProjectManager extends ChangeNotifier {
         }
         await batch.commit();
 
-        // Send push notification to the assigned user
-        if (task.assignedTo != null && task.assignedTo!.isNotEmpty && task.assignedTo != senderEmail) {
-          _sendPushToUserByEmail(
-            recipientEmail: task.assignedTo!,
-            title: '📋 มีงานใหม่!',
-            body: '${task.title} ถูกมอบหมายให้คุณใน "${project.name}"',
-            data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
-          );
+        // Send push notification to all assigned users
+        for (final assignee in task.assignedTo) {
+          if (assignee != senderEmail) {
+            _sendPushToUserByEmail(
+              recipientEmail: assignee,
+              title: '📋 มีงานใหม่!',
+              body: '${task.title} ถูกมอบหมายให้คุณใน "${project.name}"',
+              data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
+            );
+          }
         }
 
         // Also push to all other members about new task
         for (final memberEmail in project.members) {
-          if (memberEmail != senderEmail && memberEmail != task.assignedTo) {
+          if (memberEmail != senderEmail && !task.assignedTo.contains(memberEmail)) {
             _sendPushToUserByEmail(
               recipientEmail: memberEmail,
               title: '📋 งานใหม่ใน "${project.name}"',
@@ -454,32 +456,35 @@ class ProjectManager extends ChangeNotifier {
             await batch.commit();
           }
 
-          // Task reassignment notification
-          if (oldTask.assignedTo != newTask.assignedTo &&
-              newTask.assignedTo != null &&
-              newTask.assignedTo!.isNotEmpty &&
-              newTask.assignedTo != senderEmail) {
-            final notifDocRef =
-                FirebaseFirestore.instance.collection('notifications').doc();
-            await notifDocRef.set({
-              'id': notifDocRef.id,
-              'recipientEmail': newTask.assignedTo,
-              'projectId': project.id,
-              'projectName': project.name,
-              'senderName': senderName,
-              'senderEmail': senderEmail,
-              'type': 'task_assigned',
-              'text': 'assigned task "${newTask.title}" to you',
-              'timestamp': FieldValue.serverTimestamp(),
-              'isRead': false,
-            });
+          // Task reassignment notification — notify newly added assignees
+          final oldAssignees = oldTask.assignedTo.toSet();
+          final newAssignees = newTask.assignedTo.toSet();
+          final addedAssignees = newAssignees.difference(oldAssignees);
 
-            _sendPushToUserByEmail(
-              recipientEmail: newTask.assignedTo!,
-              title: '📋 มีงานมอบหมายให้คุณ!',
-              body: '$senderName มอบหมายงาน "${newTask.title}" ให้คุณในโปรเจค "${project.name}"',
-              data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
-            );
+          for (final assignee in addedAssignees) {
+            if (assignee != senderEmail) {
+              final notifDocRef =
+                  FirebaseFirestore.instance.collection('notifications').doc();
+              await notifDocRef.set({
+                'id': notifDocRef.id,
+                'recipientEmail': assignee,
+                'projectId': project.id,
+                'projectName': project.name,
+                'senderName': senderName,
+                'senderEmail': senderEmail,
+                'type': 'task_assigned',
+                'text': 'assigned task "${newTask.title}" to you',
+                'timestamp': FieldValue.serverTimestamp(),
+                'isRead': false,
+              });
+
+              _sendPushToUserByEmail(
+                recipientEmail: assignee,
+                title: '📋 มีงานมอบหมายให้คุณ!',
+                body: '$senderName มอบหมายงาน "${newTask.title}" ให้คุณในโปรเจค "${project.name}"',
+                data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
+              );
+            }
           }
         }
       }

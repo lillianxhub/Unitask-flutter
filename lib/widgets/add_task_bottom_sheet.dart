@@ -5,7 +5,7 @@ class AddTaskBottomSheet extends StatefulWidget {
   final void Function(
     String name,
     String description,
-    String assignedTo,
+    List<String> assignedTo,
     String dueDate,
     String priority,
   )?
@@ -19,7 +19,7 @@ class AddTaskBottomSheet extends StatefulWidget {
     void Function(
       String name,
       String description,
-      String assignedTo,
+      List<String> assignedTo,
       String dueDate,
       String priority,
     )?
@@ -44,16 +44,8 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _dueDateController = TextEditingController();
-  String? _assignedTo;
+  final List<String> _assignedTo = [];
   String _priority = 'Medium';
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.members.isNotEmpty) {
-      _assignedTo = widget.members.first;
-    }
-  }
 
   @override
   void dispose() {
@@ -79,6 +71,10 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // Members not yet selected
+    final availableMembers =
+        widget.members.where((m) => !_assignedTo.contains(m)).toList();
+
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
@@ -124,51 +120,92 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
               decoration: _inputDecoration('Enter description'),
             ),
             const SizedBox(height: 16),
-            // Assigned To
-            Container(
-              width: double.infinity,
-              height: 55,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
+            // Assigned To — Dropdown + Chips
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                ' Assign To',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: widget.members.contains(_assignedTo)
-                      ? _assignedTo
-                      : null,
-                  hint: Text(
-                    'Assigned To',
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.4),
-                      fontSize: 16,
-                    ),
-                  ),
-                  icon: Icon(
-                    Icons.arrow_drop_down,
-                    color: cs.onSurface.withValues(alpha: 0.4),
-                  ),
-                  dropdownColor: cs.surface,
-                  isExpanded: true,
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _assignedTo = newValue;
-                      });
-                    }
-                  },
-                  items: widget.members.map<DropdownMenuItem<String>>((
-                    String value,
-                  ) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
+            ),
+            const SizedBox(height: 8),
+            // Selected members as chips
+            if (_assignedTo.isNotEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: _assignedTo.map((email) {
+                    return Chip(
+                      label: Text(
+                        email,
+                        style: TextStyle(fontSize: 12, color: cs.onSurface),
+                      ),
+                      deleteIcon: Icon(Icons.close, size: 16, color: cs.error),
+                      onDeleted: () {
+                        setState(() {
+                          _assignedTo.remove(email);
+                        });
+                      },
+                      backgroundColor: cs.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     );
                   }).toList(),
                 ),
               ),
-            ),
+            if (_assignedTo.isNotEmpty) const SizedBox(height: 8),
+            // Dropdown to add more members
+            if (availableMembers.isNotEmpty)
+              Container(
+                width: double.infinity,
+                height: 55,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: null,
+                    hint: Text(
+                      _assignedTo.isEmpty
+                          ? 'Select member'
+                          : 'Add another member',
+                      style: TextStyle(
+                        color: cs.onSurface.withValues(alpha: 0.4),
+                        fontSize: 16,
+                      ),
+                    ),
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                    ),
+                    dropdownColor: cs.surface,
+                    isExpanded: true,
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _assignedTo.add(newValue);
+                        });
+                      }
+                    },
+                    items: availableMembers.map<DropdownMenuItem<String>>((
+                      String value,
+                    ) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
             const SizedBox(height: 16),
             // Due date
             GestureDetector(
@@ -226,7 +263,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                       widget.onSave?.call(
                         name,
                         _descController.text.trim(),
-                        _assignedTo ?? '',
+                        List<String>.from(_assignedTo),
                         _dueDateController.text.trim(),
                         _priority,
                       );

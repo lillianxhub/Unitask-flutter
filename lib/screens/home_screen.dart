@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Map<String, dynamic>> userTasks = [];
     for (final project in projects) {
       for (final task in project.tasks) {
-        if (task.assignedTo == userEmail) {
+        if (task.assignedTo.contains(userEmail)) {
           userTasks.add({
             'title': task.title,
             'projectName': project.name,
@@ -642,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     for (var project in projects) {
       for (var task in project.tasks) {
-        if (task.assignedTo == userEmail &&
+        if (task.assignedTo.contains(userEmail) &&
             (_selectedPriority == 'All' ||
                 task.priority == _selectedPriority)) {
           totalAssigned++;
@@ -715,7 +715,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     for (var project in projects) {
       for (var task in project.tasks) {
-        if (task.assignedTo == userEmail &&
+        if (task.assignedTo.contains(userEmail) &&
             (_selectedPriority == 'All' ||
                 task.priority == _selectedPriority)) {
           if (_selectedTaskFilter == 'Total') {
