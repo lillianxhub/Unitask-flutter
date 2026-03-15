@@ -50,6 +50,7 @@ ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
 assets/service_account.json
 unitask-app-*.json
+firebase.json
 *.p12
 *.keystore
 .env
