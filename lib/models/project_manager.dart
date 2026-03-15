@@ -200,6 +200,14 @@ class ProjectManager extends ChangeNotifier {
           'timestamp': FieldValue.serverTimestamp(),
           'isRead': false,
         });
+
+        // Also send push notification
+        _sendPushToUserByEmail(
+          recipientEmail: memberEmail,
+          title: '📩 คำเชิญใหม่!',
+          body: '$senderName ได้เชิญคุณเข้าร่วมโปรเจค "${project.name}"',
+          data: {'type': 'invite', 'projectId': docRef.id},
+        );
       }
       await batch.commit();
       if (kDebugMode) {
@@ -797,6 +805,37 @@ class ProjectManager extends ChangeNotifier {
               'rejectedMembers': project.rejectedMembers,
               'memberRoles': project.memberRoles,
             });
+
+        // Notify the project owner about the rejection
+        final rejectingUserName =
+            FirebaseAuth.instance.currentUser?.displayName ??
+            userEmail.split('@').first;
+
+        if (project.ownerEmail.isNotEmpty) {
+          final notifDocRef = FirebaseFirestore.instance
+              .collection('notifications')
+              .doc();
+          await notifDocRef.set({
+            'id': notifDocRef.id,
+            'recipientEmail': project.ownerEmail,
+            'projectId': project.id,
+            'projectName': project.name,
+            'senderName': rejectingUserName,
+            'senderEmail': userEmail,
+            'type': 'reject',
+            'text': 'declined the invitation to join the project',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
+
+          _sendPushToUserByEmail(
+            recipientEmail: project.ownerEmail,
+            title: '❌ คำเชิญถูกปฏิเสธ',
+            body: '$rejectingUserName ปฏิเสธคำเชิญเข้าร่วมโปรเจค "${project.name}"',
+            data: {'type': 'reject', 'projectId': project.id ?? ''},
+          );
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -833,6 +872,36 @@ class ProjectManager extends ChangeNotifier {
               'rejectedMembers': project.rejectedMembers,
               'memberRoles': project.memberRoles,
             });
+
+        // Notify the removed member
+        final senderEmail =
+            FirebaseAuth.instance.currentUser?.email ?? 'System';
+        final senderName = FirebaseAuth.instance.currentUser?.displayName ??
+            senderEmail.split('@').first;
+
+        final notifDocRef = FirebaseFirestore.instance
+            .collection('notifications')
+            .doc();
+        await notifDocRef.set({
+          'id': notifDocRef.id,
+          'recipientEmail': email,
+          'projectId': project.id,
+          'projectName': project.name,
+          'senderName': senderName,
+          'senderEmail': senderEmail,
+          'type': 'removed',
+          'text': 'removed you from the project',
+          'timestamp': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+
+        _sendPushToUserByEmail(
+          recipientEmail: email,
+          title: '🚫 ถูกถอดออกจากโปรเจค',
+          body: '$senderName ได้ถอดคุณออกจากโปรเจค "${project.name}"',
+          data: {'type': 'removed', 'projectId': project.id ?? ''},
+        );
+
         notifyListeners();
       }
     } catch (e) {
@@ -867,6 +936,38 @@ class ProjectManager extends ChangeNotifier {
               .collection('projects')
               .doc(project.id)
               .update({'memberRoles': project.memberRoles});
+
+          // Notify the member about the role change
+          final senderEmail =
+              FirebaseAuth.instance.currentUser?.email ?? 'System';
+          final senderName = FirebaseAuth.instance.currentUser?.displayName ??
+              senderEmail.split('@').first;
+
+          if (email != senderEmail) {
+            final notifDocRef = FirebaseFirestore.instance
+                .collection('notifications')
+                .doc();
+            await notifDocRef.set({
+              'id': notifDocRef.id,
+              'recipientEmail': email,
+              'projectId': project.id,
+              'projectName': project.name,
+              'senderName': senderName,
+              'senderEmail': senderEmail,
+              'type': 'role_changed',
+              'text': 'changed your role to $newRole',
+              'timestamp': FieldValue.serverTimestamp(),
+              'isRead': false,
+            });
+
+            _sendPushToUserByEmail(
+              recipientEmail: email,
+              title: '🔄 Role เปลี่ยน',
+              body: '$senderName เปลี่ยน Role ของคุณเป็น "$newRole" ในโปรเจค "${project.name}"',
+              data: {'type': 'role_changed', 'projectId': project.id ?? ''},
+            );
+          }
+
           notifyListeners();
         }
       }
