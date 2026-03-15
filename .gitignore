@@ -54,3 +54,4 @@ unitask-app-*.json
 *.keystore
 .env
 .env.*
+!.env.example
