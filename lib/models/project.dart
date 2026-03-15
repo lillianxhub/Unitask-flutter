@@ -7,6 +7,7 @@ class Project {
   final String dueDate;
   final List<String> members;
   final List<String> pendingMembers;
+  final List<String> rejectedMembers;
   final Map<String, dynamic> memberRoles;
   final String ownerId;
   final String ownerName;
@@ -25,6 +26,7 @@ class Project {
     this.ownerEmail = '',
     List<String>? members,
     List<String>? pendingMembers,
+    List<String>? rejectedMembers,
     Map<String, dynamic>? memberRoles,
     this.status = 'Doing',
     List<Task>? tasks,
@@ -33,6 +35,7 @@ class Project {
        comments = comments ?? [],
        members = members ?? [],
        pendingMembers = pendingMembers ?? [],
+       rejectedMembers = rejectedMembers ?? [],
        memberRoles = memberRoles ?? {};
 
   int get progress {
@@ -51,6 +54,7 @@ class Project {
       'ownerEmail': ownerEmail,
       'members': members,
       'pendingMembers': pendingMembers,
+      'rejectedMembers': rejectedMembers,
       'memberRoles': memberRoles,
       'status': status,
       'tasks': tasks.map((t) => t.toJson()).toList(),
@@ -69,6 +73,7 @@ class Project {
       ownerEmail: json['ownerEmail'] ?? '',
       members: List<String>.from(json['members'] ?? []),
       pendingMembers: List<String>.from(json['pendingMembers'] ?? []),
+      rejectedMembers: List<String>.from(json['rejectedMembers'] ?? []),
       memberRoles: Map<String, dynamic>.from(json['memberRoles'] ?? {}),
       status: json['status'] ?? 'Doing',
       tasks:
