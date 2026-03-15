@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
+import '../models/locale_manager.dart';
 
 class EditProfileBottomSheet extends StatefulWidget {
   const EditProfileBottomSheet({super.key});
@@ -83,7 +84,7 @@ class _EditProfileBottomSheetState extends State<EditProfileBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'แก้ไขข้อมูลส่วนตัว',
+                  LocaleManager.instance.t('edit_profile'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

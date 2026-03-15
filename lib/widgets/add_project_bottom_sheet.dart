@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/locale_manager.dart';
 
 class AddProjectBottomSheet extends StatefulWidget {
   final void Function(String name, String description, String dueDate)? onSave;
@@ -54,8 +55,8 @@ class _AddProjectBottomSheetState extends State<AddProjectBottomSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'ตกลง',
+            child: Text(
+              LocaleManager.instance.t('ok'),
               style: TextStyle(
                 color: Color(0xFF6750A4),
                 fontWeight: FontWeight.bold,
@@ -203,8 +204,8 @@ class _AddProjectBottomSheetState extends State<AddProjectBottomSheet> {
 
                     if (name.isEmpty || desc.isEmpty || dueDate.isEmpty) {
                       _showErrorDialog(
-                        'ข้อมูลไม่ครบถ้วน',
-                        'กรุณากรอกชื่อโปรเจกต์ รายละเอียด และกำหนดส่งให้ครบทุกช่อง',
+                        LocaleManager.instance.t('incomplete_data'),
+                        LocaleManager.instance.t('fill_project_fields'),
                       );
                       return;
                     }

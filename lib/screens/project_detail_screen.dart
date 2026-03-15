@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/project.dart';
 import '../models/project_manager.dart';
+import '../models/locale_manager.dart';
 import '../models/user_manager.dart';
 import '../models/task.dart';
 import '../widgets/add_task_bottom_sheet.dart';
@@ -24,6 +25,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Map<String, String> _memberNamesMap = {};
   bool _isLoadingMembers = true;
   String _currentProjectName = '';
+  String _taskSortOption = 'None';
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -89,7 +91,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   void _onTaskAdded(
     String name,
     String description,
-    String assignedTo,
+    List<String> assignedTo,
     String dueDate,
     String priority,
   ) {
@@ -118,7 +120,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       description: description,
       dueDate: parsedDueDate,
       createdDate: DateTime.now(),
-      assignedTo: assignedTo.isNotEmpty ? assignedTo : null,
+      assignedTo: assignedTo,
       priority: priority,
     );
 
@@ -216,8 +218,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
-                                            content: const Text(
-                                              'โปรเจคเสร็จสิ้นแล้ว ✅',
+                                            content: Text(
+                                              LocaleManager.instance.t(
+                                                'project_completed',
+                                              ),
                                             ),
                                             backgroundColor: Colors.green,
                                             duration: const Duration(
@@ -236,8 +240,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
-                                            content: const Text(
-                                              'เปิดโปรเจคใหม่แล้ว 🔄',
+                                            content: Text(
+                                              LocaleManager.instance.t(
+                                                'project_reopened',
+                                              ),
                                             ),
                                             backgroundColor: cs.primary,
                                             duration: const Duration(
@@ -249,15 +255,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                         showDialog(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
-                                            title: const Text('ลบโปรเจค'),
+                                            title: Text(
+                                              LocaleManager.instance.t(
+                                                'delete_project',
+                                              ),
+                                            ),
                                             content: Text(
-                                              'คุณแน่ใจหรือไม่ว่าต้องการลบ "${project.name}"?',
+                                              '${LocaleManager.instance.t('delete_project_confirm')} "${project.name}"?',
                                             ),
                                             actions: [
                                               TextButton(
                                                 onPressed: () =>
                                                     Navigator.pop(ctx),
-                                                child: const Text('ยกเลิก'),
+                                                child: Text(
+                                                  LocaleManager.instance.t(
+                                                    'cancel',
+                                                  ),
+                                                ),
                                               ),
                                               TextButton(
                                                 onPressed: () {
@@ -274,8 +288,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                                     arguments: {'tabIndex': 0},
                                                   );
                                                 },
-                                                child: const Text(
-                                                  'ลบ',
+                                                child: Text(
+                                                  LocaleManager.instance.t(
+                                                    'delete',
+                                                  ),
                                                   style: TextStyle(
                                                     color: Colors.red,
                                                   ),
@@ -490,7 +506,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         controller: _commentController,
                         style: TextStyle(color: cs.onSurface),
                         decoration: InputDecoration(
-                          hintText: 'เขียนความคิดเห็น...',
+                          hintText: LocaleManager.instance.t('write_comment'),
                           hintStyle: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.3),
                           ),
@@ -658,15 +674,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
               const SizedBox(height: 16),
               _detailRow(
-                'ผู้รับผิดชอบ',
+                LocaleManager.instance.t('assignee'),
                 _isLoadingMembers
-                    ? 'กำลังโหลด...'
-                    : _memberNamesMap.values.join(', '),
+                    ? LocaleManager.instance.t('loading')
+                    : (_memberNamesMap[project.ownerEmail] ??
+                        (project.ownerName.isNotEmpty
+                            ? project.ownerName
+                            : project.ownerEmail)),
               ),
               const SizedBox(height: 16),
-              _detailRow('วันครบกำหนด', project.dueDate),
+              _detailRow(
+                LocaleManager.instance.t('due_date_label'),
+                project.dueDate,
+              ),
               const SizedBox(height: 16),
-              _detailRow('สถานะ', project.status),
+              _detailRow(LocaleManager.instance.t('status'), project.status),
               const SizedBox(height: 32),
               // Comment section
               Text(
@@ -682,7 +704,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: Text(
-                    'ยังไม่มีความคิดเห็น',
+                    LocaleManager.instance.t('no_comments'),
                     style: TextStyle(
                       color: cs.onSurface.withValues(alpha: 0.5),
                     ),
@@ -789,6 +811,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             (userEmail == project.ownerId ? 'Owner' : 'Editor');
         final canEdit = userRole == 'Owner' || userRole == 'Editor';
 
+        // Viewers only see tasks assigned to them
+        List<Task> visibleTasks = canEdit
+            ? List.from(tasks)
+            : tasks.where((t) => t.assignedTo.contains(userEmail)).toList();
+
+        if (_taskSortOption == 'Priority') {
+          final priorityWeight = {'High': 3, 'Medium': 2, 'Low': 1};
+          visibleTasks.sort((a, b) {
+            final wA = priorityWeight[a.priority] ?? 0;
+            final wB = priorityWeight[b.priority] ?? 0;
+            return wB.compareTo(wA); // Descending
+          });
+        } else if (_taskSortOption == 'DueDate') {
+          visibleTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        }
+
         return Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -805,7 +843,28 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       color: cs.onSurface,
                     ),
                   ),
-                  Icon(Icons.sort, color: cs.onSurface),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.sort, color: cs.onSurface),
+                    onSelected: (value) {
+                      setState(() {
+                        _taskSortOption = value;
+                      });
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'None',
+                        child: Text('Default Order'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'Priority',
+                        child: Text('Priority (High to Low)'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'DueDate',
+                        child: Text('Due Date (Earliest First)'),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -820,13 +879,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 ),
                 const SizedBox(height: 40),
               ] else ...[
-                ...tasks.map(
-                  (task) => GestureDetector(
+                ...visibleTasks.map((task) {
+                  final isAssignedToMe = task.assignedTo.contains(userEmail);
+                  return GestureDetector(
                     onTap: () {
                       TaskDetailBottomSheet.show(
                         context,
                         task,
                         canEdit: canEdit,
+                        canMarkComplete: canEdit || isAssignedToMe,
+                        canComment:
+                            true, // Viewers can comment on tasks they can see
+                        members: project.members,
                         onDelete: canEdit
                             ? () {
                                 context.read<ProjectManager>().deleteTask(
@@ -835,7 +899,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                 );
                               }
                             : null,
-                        onUpdate: canEdit
+                        onUpdate: (canEdit || isAssignedToMe)
                             ? (updatedTask) {
                                 context.read<ProjectManager>().updateTask(
                                   projectName,
@@ -844,28 +908,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                 );
                               }
                             : null,
-                        onComment: canEdit
-                            ? (commentText) {
-                                final userManager = context.read<UserManager>();
-                                final newComment = Comment(
-                                  id: UniqueKey().toString(),
-                                  authorEmail: userManager.email,
-                                  authorName: userManager.name,
-                                  text: commentText,
-                                  timestamp: DateTime.now(),
-                                );
-                                context.read<ProjectManager>().addTaskComment(
-                                  projectName,
-                                  task,
-                                  newComment,
-                                );
-                              }
-                            : null,
+                        onComment: (commentText) {
+                          final userManager = context.read<UserManager>();
+                          final newComment = Comment(
+                            id: UniqueKey().toString(),
+                            authorEmail: userManager.email,
+                            authorName: userManager.name,
+                            text: commentText,
+                            timestamp: DateTime.now(),
+                          );
+                          context.read<ProjectManager>().addTaskComment(
+                            projectName,
+                            task,
+                            newComment,
+                          );
+                        },
                       );
                     },
                     child: _buildTaskCard(task),
-                  ),
-                ),
+                  );
+                }),
               ],
             ],
           ),
@@ -880,21 +942,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     String subtitle = task.description.isEmpty
         ? 'No description'
         : task.description;
-    String status = task.isCompleted ? 'Complete' : 'Doing';
+
+    // Progress-based status
+    String status;
     Color statusColor;
     Color statusBg;
-    switch (status) {
-      case 'Complete':
-        statusColor = const Color(0xFF2E7D32);
-        statusBg = const Color(0xFFE8F5E9);
-        break;
-      case 'Review':
-        statusColor = const Color(0xFFE65100);
-        statusBg = const Color(0xFFFFF3E0);
-        break;
-      default:
-        statusColor = const Color(0xFF1565C0);
-        statusBg = const Color(0xFFE3F2FD);
+    if (task.isCompleted) {
+      status = 'Complete';
+      statusColor = const Color(0xFF2E7D32);
+      statusBg = const Color(0xFFE8F5E9);
+    } else if (task.assignedTo.isNotEmpty && task.completedCount > 0) {
+      status = '${task.completedCount}/${task.assignedTo.length} Done';
+      statusColor = const Color(0xFFE65100);
+      statusBg = const Color(0xFFFFF3E0);
+    } else {
+      status = 'Doing';
+      statusColor = const Color(0xFF1565C0);
+      statusBg = const Color(0xFFE3F2FD);
     }
 
     Color priorityColor;
@@ -903,13 +967,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         priorityColor = Colors.red;
         break;
       case 'Medium':
-        priorityColor = Colors.orange;
+        priorityColor = Colors.purple;
         break;
       case 'Low':
         priorityColor = Colors.blue;
         break;
       default:
-        priorityColor = Colors.orange;
+        priorityColor = Colors.purple;
     }
 
     return Card(
@@ -958,7 +1022,24 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 color: cs.onSurface.withValues(alpha: 0.5),
               ),
             ),
-            const SizedBox(height: 12),
+            // Progress bar
+            if (task.assignedTo.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: task.progress,
+                  minHeight: 4,
+                  backgroundColor: cs.onSurface.withValues(alpha: 0.08),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    task.isCompleted
+                        ? const Color(0xFF4CAF50)
+                        : const Color(0xFFCFBDF6),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
             Row(
               children: [
                 Icon(
@@ -998,19 +1079,28 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       ),
                     ),
                   ),
-                if (task.assignedTo != null && task.assignedTo!.isNotEmpty)
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: const Color(0xFFCFBDF6),
-                    child: Text(
-                      task.assignedTo![0].toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                if (task.assignedTo.isNotEmpty)
+                  ...task.assignedTo.take(3).toList().asMap().entries.map((entry) {
+                    final email = entry.value;
+                    final isDone = task.completedBy.contains(email);
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: isDone
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFCFBDF6),
+                        child: Text(
+                          email[0].toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  )
+                    );
+                  })
                 else
                   const CircleAvatar(
                     radius: 12,
@@ -1144,6 +1234,78 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       ),
                     ),
                   ),
+              // Pending Members
+              if (project.pendingMembers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Pending',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...project.pendingMembers.map(
+                  (email) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildMemberCard(
+                      _isLoadingMembers
+                          ? 'Loading...'
+                          : (_memberNamesMap[email] ?? 'Pending User'),
+                      email,
+                      roleLabel: project.memberRoles[email] ?? 'Editor',
+                      canEditRole: false, // Cannot edit role while pending
+                      isPending: true,
+                      onRemove:
+                          (project.ownerId ==
+                                  FirebaseAuth.instance.currentUser?.uid ||
+                              project.ownerEmail == userEmail)
+                          ? () {
+                              _confirmRemoveMember(context, projectName, email);
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+
+              // Rejected Members
+              if (project.rejectedMembers.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Rejected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...project.rejectedMembers.map(
+                  (email) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildMemberCard(
+                      _isLoadingMembers
+                          ? 'Loading...'
+                          : (_memberNamesMap[email] ?? 'Rejected User'),
+                      email,
+                      roleLabel:
+                          'Review', // Re-use styling, but label looks like reviewer or something
+                      canEditRole: false,
+                      isRejected: true,
+                      onRemove:
+                          (project.ownerId ==
+                                  FirebaseAuth.instance.currentUser?.uid ||
+                              project.ownerEmail == userEmail)
+                          ? () {
+                              _confirmRemoveMember(context, projectName, email);
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -1186,10 +1348,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     bool isOwner = false,
     String roleLabel = 'Editor',
     bool canEditRole = false,
+    bool isPending = false,
+    bool isRejected = false,
     ValueChanged<String>? onRoleChanged,
     VoidCallback? onRemove,
   }) {
     final cs = Theme.of(context).colorScheme;
+    final nameStyle = TextStyle(
+      fontWeight: FontWeight.bold,
+      color: isRejected ? Colors.red : cs.onSurface,
+      decoration: isRejected ? TextDecoration.lineThrough : null,
+    );
+    final statusText = isPending
+        ? ' (Pending)'
+        : isRejected
+        ? ' (Rejected)'
+        : '';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1217,13 +1391,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: cs.onSurface,
-                  ),
-                ),
+                Text('$name$statusText', style: nameStyle),
                 Text(
                   email,
                   style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),

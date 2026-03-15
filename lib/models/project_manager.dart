@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'project.dart';
 import 'task.dart';
+import '../services/notification_service.dart';
 
 class ProjectManager extends ChangeNotifier {
   ProjectManager._() {
@@ -104,10 +105,11 @@ class ProjectManager extends ChangeNotifier {
         .snapshots()
         .listen(
           (snapshot) {
-            if (kDebugMode)
+            if (kDebugMode) {
               print(
                 'Notification listener triggered for $userEmail: ${snapshot.docs.length} docs found.',
               );
+            }
             _notifications = snapshot.docs.map((doc) {
               return AppNotification.fromJson(doc.data(), doc.id);
             }).toList();
@@ -121,8 +123,9 @@ class ProjectManager extends ChangeNotifier {
 
   List<Project> get projects {
     final userEmail = FirebaseAuth.instance.currentUser?.email;
-    if (_userId == null || userEmail == null)
+    if (_userId == null || userEmail == null) {
       return List.unmodifiable(_projects);
+    }
     return _projects.where((p) => p.members.contains(userEmail)).toList();
   }
 
@@ -197,12 +200,21 @@ class ProjectManager extends ChangeNotifier {
           'timestamp': FieldValue.serverTimestamp(),
           'isRead': false,
         });
+
+        // Also send push notification
+        _sendPushToUserByEmail(
+          recipientEmail: memberEmail,
+          title: '📩 คำเชิญใหม่!',
+          body: '$senderName ได้เชิญคุณเข้าร่วมโปรเจค "${project.name}"',
+          data: {'type': 'invite', 'projectId': docRef.id},
+        );
       }
       await batch.commit();
-      if (kDebugMode)
+      if (kDebugMode) {
         print(
           'Successfully created ${project.pendingMembers.length} invite notifications on project creation',
         );
+      }
     }
   }
 
@@ -260,6 +272,30 @@ class ProjectManager extends ChangeNotifier {
         }
         await batch.commit();
 
+        // Send push notification to all assigned users
+        for (final assignee in task.assignedTo) {
+          if (assignee != senderEmail) {
+            _sendPushToUserByEmail(
+              recipientEmail: assignee,
+              title: '📋 มีงานใหม่!',
+              body: '${task.title} ถูกมอบหมายให้คุณใน "${project.name}"',
+              data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
+            );
+          }
+        }
+
+        // Also push to all other members about new task
+        for (final memberEmail in project.members) {
+          if (memberEmail != senderEmail && !task.assignedTo.contains(memberEmail)) {
+            _sendPushToUserByEmail(
+              recipientEmail: memberEmail,
+              title: '📋 งานใหม่ใน "${project.name}"',
+              body: '$senderName เพิ่มงาน: ${task.title}',
+              data: {'type': 'task_new', 'projectId': project.id ?? ''},
+            );
+          }
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -302,6 +338,7 @@ class ProjectManager extends ChangeNotifier {
           ownerEmail: old.ownerEmail,
           members: old.members,
           pendingMembers: old.pendingMembers,
+          rejectedMembers: old.rejectedMembers,
           memberRoles: old.memberRoles,
           status: newStatus,
           tasks: old.tasks,
@@ -388,6 +425,75 @@ class ProjectManager extends ChangeNotifier {
               .collection('projects')
               .doc(project.id)
               .update({'tasks': project.tasks.map((t) => t.toJson()).toList()});
+
+          final senderEmail =
+              FirebaseAuth.instance.currentUser?.email ?? 'System';
+          final senderName = FirebaseAuth.instance.currentUser?.displayName ??
+              senderEmail.split('@').first;
+
+          // Task completed notification
+          if (!oldTask.isCompleted && newTask.isCompleted) {
+            final batch = FirebaseFirestore.instance.batch();
+            final notificationsRef =
+                FirebaseFirestore.instance.collection('notifications');
+
+            for (final memberEmail in project.members) {
+              if (memberEmail != senderEmail) {
+                final docRef = notificationsRef.doc();
+                batch.set(docRef, {
+                  'id': docRef.id,
+                  'recipientEmail': memberEmail,
+                  'projectId': project.id,
+                  'projectName': project.name,
+                  'senderName': senderName,
+                  'senderEmail': senderEmail,
+                  'type': 'task_completed',
+                  'text': 'completed task: ${newTask.title}',
+                  'timestamp': FieldValue.serverTimestamp(),
+                  'isRead': false,
+                });
+
+                _sendPushToUserByEmail(
+                  recipientEmail: memberEmail,
+                  title: '✅ งานเสร็จแล้ว!',
+                  body: '$senderName ทำงาน "${newTask.title}" เสร็จแล้วในโปรเจค "${project.name}"',
+                  data: {'type': 'task_completed', 'projectId': project.id ?? ''},
+                );
+              }
+            }
+            await batch.commit();
+          }
+
+          // Task reassignment notification — notify newly added assignees
+          final oldAssignees = oldTask.assignedTo.toSet();
+          final newAssignees = newTask.assignedTo.toSet();
+          final addedAssignees = newAssignees.difference(oldAssignees);
+
+          for (final assignee in addedAssignees) {
+            if (assignee != senderEmail) {
+              final notifDocRef =
+                  FirebaseFirestore.instance.collection('notifications').doc();
+              await notifDocRef.set({
+                'id': notifDocRef.id,
+                'recipientEmail': assignee,
+                'projectId': project.id,
+                'projectName': project.name,
+                'senderName': senderName,
+                'senderEmail': senderEmail,
+                'type': 'task_assigned',
+                'text': 'assigned task "${newTask.title}" to you',
+                'timestamp': FieldValue.serverTimestamp(),
+                'isRead': false,
+              });
+
+              _sendPushToUserByEmail(
+                recipientEmail: assignee,
+                title: '📋 มีงานมอบหมายให้คุณ!',
+                body: '$senderName มอบหมายงาน "${newTask.title}" ให้คุณในโปรเจค "${project.name}"',
+                data: {'type': 'task_assigned', 'projectId': project.id ?? ''},
+              );
+            }
+          }
         }
       }
     } catch (e) {
@@ -454,6 +560,18 @@ class ProjectManager extends ChangeNotifier {
         }
         await batch.commit();
 
+        // Send push to all members about the task comment
+        for (final memberEmail in project.members) {
+          if (memberEmail != comment.authorEmail) {
+            _sendPushToUserByEmail(
+              recipientEmail: memberEmail,
+              title: '💬 ความคิดเห็นใหม่',
+              body: '${comment.authorName} แสดงความคิดเห็นในงาน "${task.title}" ของโปรเจค "${project.name}"',
+              data: {'type': 'task_comment', 'projectId': project.id ?? ''},
+            );
+          }
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -508,6 +626,18 @@ class ProjectManager extends ChangeNotifier {
         }
         await batch.commit();
 
+        // Send push to all members about the project comment
+        for (final memberEmail in project.members) {
+          if (memberEmail != comment.authorEmail) {
+            _sendPushToUserByEmail(
+              recipientEmail: memberEmail,
+              title: '💬 ความคิดเห็นใหม่',
+              body: '${comment.authorName} แสดงความคิดเห็นในโปรเจค "${project.name}"',
+              data: {'type': 'project_comment', 'projectId': project.id ?? ''},
+            );
+          }
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -526,6 +656,7 @@ class ProjectManager extends ChangeNotifier {
         // In local guest mode, we just add directly for simplicity
         if (!project.members.contains(email) &&
             !project.pendingMembers.contains(email)) {
+          project.rejectedMembers.remove(email);
           project.pendingMembers.add(email);
           project.memberRoles[email] = role;
           notifyListeners();
@@ -538,6 +669,7 @@ class ProjectManager extends ChangeNotifier {
       if (project.id != null) {
         if (!project.members.contains(email) &&
             !project.pendingMembers.contains(email)) {
+          project.rejectedMembers.remove(email);
           project.pendingMembers.add(email);
           project.memberRoles[email] = role;
           await FirebaseFirestore.instance
@@ -545,6 +677,7 @@ class ProjectManager extends ChangeNotifier {
               .doc(project.id)
               .update({
                 'pendingMembers': project.pendingMembers,
+                'rejectedMembers': project.rejectedMembers,
                 'memberRoles': project.memberRoles,
               });
 
@@ -571,8 +704,17 @@ class ProjectManager extends ChangeNotifier {
             'isRead': false,
           });
 
-          if (kDebugMode)
+          if (kDebugMode) {
             print('Successfully created invite notification for $email');
+          }
+
+          // Send push notification to the invited user's device
+          _sendPushToUserByEmail(
+            recipientEmail: email,
+            title: '📩 คำเชิญใหม่!',
+            body: '$senderName ได้เชิญคุณเข้าร่วมโปรเจค "${project.name}"',
+            data: {'type': 'invite', 'projectId': project.id ?? ''},
+          );
 
           notifyListeners();
         }
@@ -588,8 +730,10 @@ class ProjectManager extends ChangeNotifier {
 
     try {
       final project = _projects.firstWhere((p) => p.id == projectId);
-      if (project.pendingMembers.contains(userEmail)) {
+      if (project.pendingMembers.contains(userEmail) ||
+          project.rejectedMembers.contains(userEmail)) {
         project.pendingMembers.remove(userEmail);
+        project.rejectedMembers.remove(userEmail);
         if (!project.members.contains(userEmail)) {
           project.members.add(userEmail);
         }
@@ -599,7 +743,41 @@ class ProjectManager extends ChangeNotifier {
             .update({
               'members': project.members,
               'pendingMembers': project.pendingMembers,
+              'rejectedMembers': project.rejectedMembers,
             });
+
+        // Get the accepting user's display name
+        final acceptingUserName =
+            FirebaseAuth.instance.currentUser?.displayName ??
+            userEmail.split('@').first;
+
+        // Create Firestore notification for the project owner
+        if (project.ownerEmail.isNotEmpty) {
+          final notifDocRef = FirebaseFirestore.instance
+              .collection('notifications')
+              .doc();
+          await notifDocRef.set({
+            'id': notifDocRef.id,
+            'recipientEmail': project.ownerEmail,
+            'projectId': project.id,
+            'projectName': project.name,
+            'senderName': acceptingUserName,
+            'senderEmail': userEmail,
+            'type': 'accept',
+            'text': 'accepted invitation and joined the project',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
+
+          // Send push notification to the project owner
+          _sendPushToUserByEmail(
+            recipientEmail: project.ownerEmail,
+            title: '✅ ตอบรับคำเชิญแล้ว!',
+            body: '$acceptingUserName ได้เข้าร่วมโปรเจค "${project.name}" แล้ว',
+            data: {'type': 'accept', 'projectId': project.id ?? ''},
+          );
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -615,14 +793,49 @@ class ProjectManager extends ChangeNotifier {
       final project = _projects.firstWhere((p) => p.id == projectId);
       if (project.pendingMembers.contains(userEmail)) {
         project.pendingMembers.remove(userEmail);
+        if (!project.rejectedMembers.contains(userEmail)) {
+          project.rejectedMembers.add(userEmail);
+        }
         project.memberRoles.remove(userEmail);
         await FirebaseFirestore.instance
             .collection('projects')
             .doc(project.id)
             .update({
               'pendingMembers': project.pendingMembers,
+              'rejectedMembers': project.rejectedMembers,
               'memberRoles': project.memberRoles,
             });
+
+        // Notify the project owner about the rejection
+        final rejectingUserName =
+            FirebaseAuth.instance.currentUser?.displayName ??
+            userEmail.split('@').first;
+
+        if (project.ownerEmail.isNotEmpty) {
+          final notifDocRef = FirebaseFirestore.instance
+              .collection('notifications')
+              .doc();
+          await notifDocRef.set({
+            'id': notifDocRef.id,
+            'recipientEmail': project.ownerEmail,
+            'projectId': project.id,
+            'projectName': project.name,
+            'senderName': rejectingUserName,
+            'senderEmail': userEmail,
+            'type': 'reject',
+            'text': 'declined the invitation to join the project',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
+
+          _sendPushToUserByEmail(
+            recipientEmail: project.ownerEmail,
+            title: '❌ คำเชิญถูกปฏิเสธ',
+            body: '$rejectingUserName ปฏิเสธคำเชิญเข้าร่วมโปรเจค "${project.name}"',
+            data: {'type': 'reject', 'projectId': project.id ?? ''},
+          );
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -635,6 +848,8 @@ class ProjectManager extends ChangeNotifier {
       try {
         final project = _projects.firstWhere((p) => p.name == projectName);
         project.members.remove(email);
+        project.pendingMembers.remove(email);
+        project.rejectedMembers.remove(email);
         project.memberRoles.remove(email);
         notifyListeners();
       } catch (e) {}
@@ -645,14 +860,48 @@ class ProjectManager extends ChangeNotifier {
       final project = _projects.firstWhere((p) => p.name == projectName);
       if (project.id != null) {
         project.members.remove(email);
+        project.pendingMembers.remove(email);
+        project.rejectedMembers.remove(email);
         project.memberRoles.remove(email);
         await FirebaseFirestore.instance
             .collection('projects')
             .doc(project.id)
             .update({
               'members': project.members,
+              'pendingMembers': project.pendingMembers,
+              'rejectedMembers': project.rejectedMembers,
               'memberRoles': project.memberRoles,
             });
+
+        // Notify the removed member
+        final senderEmail =
+            FirebaseAuth.instance.currentUser?.email ?? 'System';
+        final senderName = FirebaseAuth.instance.currentUser?.displayName ??
+            senderEmail.split('@').first;
+
+        final notifDocRef = FirebaseFirestore.instance
+            .collection('notifications')
+            .doc();
+        await notifDocRef.set({
+          'id': notifDocRef.id,
+          'recipientEmail': email,
+          'projectId': project.id,
+          'projectName': project.name,
+          'senderName': senderName,
+          'senderEmail': senderEmail,
+          'type': 'removed',
+          'text': 'removed you from the project',
+          'timestamp': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+
+        _sendPushToUserByEmail(
+          recipientEmail: email,
+          title: '🚫 ถูกถอดออกจากโปรเจค',
+          body: '$senderName ได้ถอดคุณออกจากโปรเจค "${project.name}"',
+          data: {'type': 'removed', 'projectId': project.id ?? ''},
+        );
+
         notifyListeners();
       }
     } catch (e) {
@@ -687,6 +936,38 @@ class ProjectManager extends ChangeNotifier {
               .collection('projects')
               .doc(project.id)
               .update({'memberRoles': project.memberRoles});
+
+          // Notify the member about the role change
+          final senderEmail =
+              FirebaseAuth.instance.currentUser?.email ?? 'System';
+          final senderName = FirebaseAuth.instance.currentUser?.displayName ??
+              senderEmail.split('@').first;
+
+          if (email != senderEmail) {
+            final notifDocRef = FirebaseFirestore.instance
+                .collection('notifications')
+                .doc();
+            await notifDocRef.set({
+              'id': notifDocRef.id,
+              'recipientEmail': email,
+              'projectId': project.id,
+              'projectName': project.name,
+              'senderName': senderName,
+              'senderEmail': senderEmail,
+              'type': 'role_changed',
+              'text': 'changed your role to $newRole',
+              'timestamp': FieldValue.serverTimestamp(),
+              'isRead': false,
+            });
+
+            _sendPushToUserByEmail(
+              recipientEmail: email,
+              title: '🔄 Role เปลี่ยน',
+              body: '$senderName เปลี่ยน Role ของคุณเป็น "$newRole" ในโปรเจค "${project.name}"',
+              data: {'type': 'role_changed', 'projectId': project.id ?? ''},
+            );
+          }
+
           notifyListeners();
         }
       }
@@ -696,6 +977,36 @@ class ProjectManager extends ChangeNotifier {
   }
 
   List<Project> getAllProjects() => projects;
+
+  /// Helper: look up a user's FCM token by email and send a push notification.
+  Future<void> _sendPushToUserByEmail({
+    required String recipientEmail,
+    required String title,
+    required String body,
+    Map<String, String>? data,
+  }) async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: recipientEmail)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) return;
+
+      final fcmToken = query.docs.first.data()['fcmToken'] as String?;
+      if (fcmToken == null || fcmToken.isEmpty) return;
+
+      await NotificationService.sendPushNotification(
+        targetFcmToken: fcmToken,
+        title: title,
+        body: body,
+        data: data,
+      );
+    } catch (e) {
+      if (kDebugMode) print('Error sending push to $recipientEmail: $e');
+    }
+  }
 
   int get successRate {
     int totalTasks = 0;

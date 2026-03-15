@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_manager.dart';
+import '../models/locale_manager.dart';
 
 class RegisterBottomSheet extends StatefulWidget {
   const RegisterBottomSheet({super.key});
@@ -48,8 +49,8 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'ตกลง',
+            child: Text(
+              LocaleManager.instance.t('ok'),
               style: TextStyle(
                 color: Color(0xFF6750A4),
                 fontWeight: FontWeight.bold,
@@ -177,15 +178,17 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
                               email.isEmpty ||
                               password.isEmpty) {
                             _showErrorDialog(
-                              'ข้อมูลไม่ครบถ้วน',
-                              'กรุณากรอกข้อมูลให้ครบทุกช่อง',
+                              LocaleManager.instance.t('incomplete_data'),
+                              LocaleManager.instance.t('fill_all_fields'),
                             );
                             return;
                           }
                           if (password != confirmPassword) {
                             _showErrorDialog(
-                              'รหัสผ่านไม่ตรงกัน',
-                              'กรุณายืนยันรหัสผ่านให้ตรงกัน',
+                              LocaleManager.instance.t('password_mismatch'),
+                              LocaleManager.instance.t(
+                                'confirm_password_register',
+                              ),
                             );
                             return;
                           }
@@ -206,7 +209,10 @@ class _RegisterBottomSheetState extends State<RegisterBottomSheet> {
                               arguments: 'HOME',
                             );
                           } else {
-                            _showErrorDialog('สมัครสมาชิกไม่สำเร็จ', error);
+                            _showErrorDialog(
+                              LocaleManager.instance.t('register_failed'),
+                              error,
+                            );
                           }
                         },
                   style: ElevatedButton.styleFrom(
