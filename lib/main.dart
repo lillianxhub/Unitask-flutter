@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'models/project_manager.dart';
 import 'models/user_manager.dart';
 import 'models/theme_manager.dart';
+import 'models/locale_manager.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/my_projects_screen.dart';
@@ -13,13 +15,22 @@ import 'screens/project_detail_screen.dart';
 import 'screens/members_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/main_layout.dart';
-
 import 'screens/notifications_screen.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Register background FCM handler BEFORE Firebase.initializeApp
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize notification service (permissions + local notifications channel)
+  await NotificationService.instance.initialize();
+
   await ThemeManager.instance.loadTheme();
+  await LocaleManager.instance.loadLocale();
 
   runApp(
     MultiProvider(
@@ -27,6 +38,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ProjectManager.instance),
         ChangeNotifierProvider(create: (_) => UserManager.instance),
         ChangeNotifierProvider(create: (_) => ThemeManager.instance),
+        ChangeNotifierProvider(create: (_) => LocaleManager.instance),
       ],
       child: const UniTaskApp(),
     ),

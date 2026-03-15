@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/project_manager.dart';
+import '../models/locale_manager.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
@@ -12,257 +13,261 @@ class StatsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Consumer<LocaleManager>(
+          builder: (context, locale, _) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header
                   Text(
-                    'สรุปผลและสถิติ',
+                    locale.t('summary_stats'),
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: cs.onSurface,
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.more_vert, color: cs.onSurface),
+                  const SizedBox(height: 8),
+                  Text(
+                    locale.t('work_overview'),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'ภาพรวมการทำงานของคุณ',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-              const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              // Overview Cards
-              Consumer<ProjectManager>(
-                builder: (context, manager, child) {
-                  return Row(
-                    children: [
-                      // Success Rate Card
-                      Expanded(
-                        child: Container(
-                          height: 140,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: cs.secondary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Icon(
-                                Icons.trending_up,
-                                size: 32,
-                                color: cs.onPrimary,
+                  // Overview Cards
+                  Consumer<ProjectManager>(
+                    builder: (context, manager, child) {
+                      return Row(
+                        children: [
+                          // Success Rate Card
+                          Expanded(
+                            child: Container(
+                              height: 140,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: cs.secondary,
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              Column(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    '${manager.successRate}%',
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: cs.onPrimary,
-                                    ),
+                                  Icon(
+                                    Icons.trending_up,
+                                    size: 32,
+                                    color: cs.onPrimary,
                                   ),
-                                  Text(
-                                    'อัตราความสำเร็จ',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: cs.onPrimary.withValues(
-                                        alpha: 0.6,
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${manager.successRate}%',
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: cs.onPrimary,
+                                        ),
                                       ),
-                                    ),
+                                      Text(
+                                        locale.t('success_rate'),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: cs.onPrimary.withValues(
+                                            alpha: 0.6,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Completed Tasks Card
-                      Expanded(
-                        child: Container(
-                          height: 140,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: cs.tertiary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Icon(
-                                Icons.check_circle_outline,
-                                size: 32,
-                                color: cs.onPrimary,
+                          const SizedBox(width: 16),
+                          // Completed Tasks Card
+                          Expanded(
+                            child: Container(
+                              height: 140,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: cs.tertiary,
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              Column(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    '${manager.completedTasksCount}',
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: cs.onPrimary,
-                                    ),
+                                  Icon(
+                                    Icons.check_circle_outline,
+                                    size: 32,
+                                    color: cs.onPrimary,
                                   ),
-                                  Text(
-                                    'งานที่เสร็จสิ้น',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: cs.onPrimary.withValues(
-                                        alpha: 0.6,
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${manager.completedTasksCount}',
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: cs.onPrimary,
+                                        ),
                                       ),
-                                    ),
+                                      Text(
+                                        locale.t('completed_tasks'),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: cs.onPrimary.withValues(
+                                            alpha: 0.6,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
 
-              // Project Progress
-              Text(
-                'ความคืบหน้าของโครงงาน',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Consumer<ProjectManager>(
-                builder: (context, manager, child) {
-                  final projects = manager.projects;
-                  if (projects.isEmpty) {
-                    return const Text('ไม่มีโปรเจกต์');
-                  }
-                  return Column(
-                    children: projects.map((project) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Project Progress
+                  Text(
+                    locale.t('project_progress'),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Consumer<ProjectManager>(
+                    builder: (context, manager, child) {
+                      final projects = manager.projects;
+                      if (projects.isEmpty) {
+                        return Text(locale.t('no_projects'));
+                      }
+                      return Column(
+                        children: projects.map((project) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  project.name,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: cs.onSurface.withValues(alpha: 0.5),
-                                  ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      project.name,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${project.progress} %',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  '${project.progress} %',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: cs.onSurface.withValues(alpha: 0.5),
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: project.progress / 100,
+                                    minHeight: 8,
+                                    backgroundColor: cs.outline,
+                                    color: _getProjectColor(
+                                      projects.indexOf(project),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: project.progress / 100,
-                                minHeight: 8,
-                                backgroundColor: cs.outline,
-                                color: _getProjectColor(
-                                  projects.indexOf(project),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        }).toList(),
                       );
-                    }).toList(),
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
+                    },
+                  ),
+                  const SizedBox(height: 32),
 
-              // Weekly Stats
-              Text(
-                'สถิติรายสัปดาห์',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                ),
+                  // Weekly Stats
+                  Text(
+                    locale.t('weekly_stats'),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Consumer<ProjectManager>(
+                    builder: (context, manager, child) {
+                      final stats = manager.weeklyStats;
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildStatItem(
+                            '${stats['created']}',
+                            locale.t('tasks_created'),
+                            cs.onSurface,
+                          ),
+                          _buildStatItem(
+                            '${stats['completed']}',
+                            locale.t('tasks_completed'),
+                            Colors.green,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Consumer<ProjectManager>(
+                    builder: (context, manager, child) {
+                      final stats = manager.weeklyStats;
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildStatItem(
+                            '${stats['doing']}',
+                            locale.t('tasks_doing'),
+                            Colors.blue,
+                          ),
+                          _buildStatItem(
+                            '${stats['overdue']}',
+                            locale.t('tasks_overdue'),
+                            Colors.red,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 30),
+                ],
               ),
-              const SizedBox(height: 24),
-              Consumer<ProjectManager>(
-                builder: (context, manager, child) {
-                  final stats = manager.weeklyStats;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildStatItem(
-                        '${stats['created']}',
-                        'งานที่สร้าง',
-                        cs.onSurface,
-                      ),
-                      _buildStatItem(
-                        '${stats['completed']}',
-                        'งานที่เสร็จ',
-                        Colors.green,
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              Consumer<ProjectManager>(
-                builder: (context, manager, child) {
-                  final stats = manager.weeklyStats;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildStatItem(
-                        '${stats['doing']}',
-                        'งานที่กำลังทำ',
-                        Colors.blue,
-                      ),
-                      _buildStatItem(
-                        '${stats['overdue']}',
-                        'งานที่เลยกำหนด',
-                        Colors.red,
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
