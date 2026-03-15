@@ -137,13 +137,13 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: Consumer<ProjectManager>(
                 builder: (context, manager, child) {
-                  final projects = manager.projects;
-                  if (_searchQuery.isNotEmpty) {
-                    return _buildSearchResults(projects);
-                  }
                   final userEmail =
                       FirebaseAuth.instance.currentUser?.email ??
                       'guest@unitask.com';
+                  final projects = manager.projects;
+                  if (_searchQuery.isNotEmpty) {
+                    return _buildSearchResults(projects, userEmail);
+                  }
 
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
@@ -206,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 8),
                           Column(
                             children: projects
-                                .map((p) => _buildProjectCard(p))
+                                .map((p) => _buildProjectCard(p, userEmail))
                                 .toList(),
                           ),
                         ],
@@ -358,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSearchResults(List<Project> projects) {
+  Widget _buildSearchResults(List<Project> projects, String userEmail) {
     final cs = Theme.of(context).colorScheme;
 
     // Filter projects by name or description
@@ -436,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            ...matchedProjects.map((p) => _buildProjectCard(p)),
+            ...matchedProjects.map((p) => _buildProjectCard(p, userEmail)),
             const SizedBox(height: 20),
           ],
           // Tasks section
@@ -1092,7 +1092,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProjectCard(Project project) {
+  Widget _buildProjectCard(Project project, String userEmail) {
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -1136,7 +1136,12 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildStatusPill(project.status),
+                  Row(
+                    children: [
+                      _buildStatusPill(project.status),
+                      _buildPriorityCountBadge(project, userEmail),
+                    ],
+                  ),
                   Text(
                     '${project.progress}%',
                     style: TextStyle(
@@ -1220,5 +1225,69 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+  Widget _buildPriorityCountBadge(Project project, String userEmail) {
+    List<String> prioritiesToCheck = _selectedPriority == 'All'
+        ? ['High', 'Medium', 'Low']
+        : [_selectedPriority];
+
+    List<Widget> badges = [];
+    final bool isOwner = userEmail == project.ownerEmail;
+
+    for (String priority in prioritiesToCheck) {
+      int count;
+      if (isOwner) {
+        // Owner sees overall project picture
+        count = project.tasks
+            .where((t) => t.priority == priority && !t.isCompleted)
+            .length;
+      } else {
+        // Member sees only their personal assigned work
+        count = project.tasks
+            .where((t) =>
+                t.priority == priority &&
+                t.assignedTo.contains(userEmail) &&
+                !t.completedBy.contains(userEmail))
+            .length;
+      }
+
+      if (count > 0) {
+        Color color;
+        switch (priority.toLowerCase()) {
+          case 'high':
+            color = Colors.red;
+            break;
+          case 'medium':
+            color = Colors.purple;
+            break;
+          case 'low':
+            color = Colors.blue;
+            break;
+          default:
+            color = Colors.grey;
+        }
+
+        badges.add(
+          Container(
+            margin: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return Row(children: badges);
   }
 }
