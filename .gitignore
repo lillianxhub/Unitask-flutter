@@ -49,5 +49,5 @@ unitask-app-*.json
 .env
 .env.*
 firebase.json
-
 pubspec.lock
+!.env.example
