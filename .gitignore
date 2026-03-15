@@ -44,6 +44,13 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Secrets
+# Secrets & Firebase credentials
 /unitask-app-663dee45bd42.json
 /assets/service_account.json
+**/google-services.json
+**/GoogleService-Info.plist
+lib/firebase_options.dart
+*.p12
+*.keystore
+*.jks
+*-service-account*.json
