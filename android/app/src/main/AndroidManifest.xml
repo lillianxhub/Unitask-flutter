@@ -1,8 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for FCM push notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Required for sending HTTP requests to FCM API -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Required for foreground notification vibration -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <application
-        android:label="unitask"
+        android:label="UniTask"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"
