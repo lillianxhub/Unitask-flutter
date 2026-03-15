@@ -87,7 +87,7 @@ class NotificationsScreen extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
-                            'Comments',
+                            'Activity',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -110,8 +110,26 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
+  /// Find the invite notification for this project to get the sender name
+  String _getInviterName(ProjectManager manager, dynamic project) {
+    try {
+      final inviteNotif = manager.notifications.firstWhere(
+        (n) => n.type == 'invite' && n.projectId == project.id,
+      );
+      return inviteNotif.senderName;
+    } catch (_) {
+      // Fallback: use ownerName from the project itself
+      return (project.ownerName as String?)?.isNotEmpty == true
+          ? project.ownerName
+          : 'Someone';
+    }
+  }
+
   Widget _buildInviteCard(BuildContext context, dynamic project) {
     final cs = Theme.of(context).colorScheme;
+    final manager = context.read<ProjectManager>();
+    final inviterName = _getInviterName(manager, project);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -133,7 +151,15 @@ class NotificationsScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: cs.secondary,
-                child: const Icon(Icons.group, color: Colors.white),
+                child: Text(
+                  inviterName.isNotEmpty
+                      ? inviterName[0].toUpperCase()
+                      : 'U',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -148,11 +174,24 @@ class NotificationsScreen extends StatelessWidget {
                         color: cs.onSurface,
                       ),
                     ),
-                    Text(
-                      'You have been invited to join "${project.name}"',
-                      style: TextStyle(
-                        color: cs.onSurface.withValues(alpha: 0.5),
-                        fontSize: 14,
+                    const SizedBox(height: 2),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: cs.onSurface.withValues(alpha: 0.6),
+                          fontSize: 14,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: inviterName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const TextSpan(text: ' invited you to join '),
+                          TextSpan(
+                            text: '"${project.name}"',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -214,8 +253,42 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
+  /// Get the icon and color for each notification type
+  ({IconData icon, Color color}) _notifStyle(String type, ColorScheme cs) {
+    return switch (type) {
+      'invite'         => (icon: Icons.mail_outline, color: cs.secondary),
+      'accept'         => (icon: Icons.check_circle_outline, color: Colors.green),
+      'reject'         => (icon: Icons.cancel_outlined, color: Colors.redAccent),
+      'task'           => (icon: Icons.add_task, color: Colors.blue),
+      'task_assigned'  => (icon: Icons.assignment_ind, color: Colors.orange),
+      'task_completed' => (icon: Icons.task_alt, color: Colors.green),
+      'comment'        => (icon: Icons.comment_outlined, color: cs.secondary),
+      'removed'        => (icon: Icons.person_remove_outlined, color: Colors.redAccent),
+      'role_changed'   => (icon: Icons.swap_horiz, color: Colors.purple),
+      _                => (icon: Icons.notifications_outlined, color: cs.secondary),
+    };
+  }
+
+  /// Get the action text describing what happened
+  String _notifActionText(AppNotification notif) {
+    return switch (notif.type) {
+      'invite'         => ' invited you to join ',
+      'accept'         => ' accepted the invitation to ',
+      'reject'         => ' declined the invitation to ',
+      'task'           => ' added a task to ',
+      'task_assigned'  => ' assigned a task to you in ',
+      'task_completed' => ' completed a task in ',
+      'comment'        => ' commented on ',
+      'removed'        => ' removed you from ',
+      'role_changed'   => ' changed your role in ',
+      _                => ' updated ',
+    };
+  }
+
   Widget _buildNotificationCard(BuildContext context, AppNotification notif) {
     final cs = Theme.of(context).colorScheme;
+    final style = _notifStyle(notif.type, cs);
+
     return GestureDetector(
       onTap: () {
         context.read<ProjectManager>().markNotificationAsRead(notif.id);
@@ -243,16 +316,8 @@ class NotificationsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              backgroundColor: cs.secondary,
-              child: Text(
-                notif.senderName.isNotEmpty
-                    ? notif.senderName[0].toUpperCase()
-                    : 'U',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              backgroundColor: style.color,
+              child: Icon(style.icon, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -267,11 +332,7 @@ class NotificationsScreen extends StatelessWidget {
                           text: notif.senderName,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(
-                          text: notif.type == 'task'
-                              ? ' added a task to '
-                              : ' commented on ',
-                        ),
+                        TextSpan(text: _notifActionText(notif)),
                         TextSpan(
                           text: notif.projectName,
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -279,16 +340,18 @@ class NotificationsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '"${notif.text}"',
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.5),
-                      fontStyle: FontStyle.italic,
+                  if (notif.text.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '"${notif.text}"',
+                      style: TextStyle(
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                        fontStyle: FontStyle.italic,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                 ],
               ),
             ),
