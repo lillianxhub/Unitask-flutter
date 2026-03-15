@@ -76,6 +76,9 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
   late List<String> _assignedTo;
   late List<String> _completedBy;
 
+  /// Starts in read-only mode; user taps pencil icon to enable editing.
+  bool _isEditing = false;
+
   @override
   void initState() {
     super.initState();
@@ -154,22 +157,82 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: cs.onSurface.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
+          // --- Drag handle + action icons row ---
+          Row(
+            children: [
+              const Spacer(),
+              Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: cs.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-            ),
+              const Spacer(),
+            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 4),
+          // --- Action icons (pencil + delete) at top-right ---
+          if (widget.canEdit || widget.onDelete != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (widget.canEdit)
+                  IconButton(
+                    icon: Icon(
+                      _isEditing ? Icons.edit_off : Icons.edit,
+                      color: _isEditing ? cs.primary : cs.onSurface.withValues(alpha: 0.5),
+                      size: 22,
+                    ),
+                    tooltip: _isEditing ? 'Done editing' : 'Edit task',
+                    onPressed: () {
+                      setState(() {
+                        _isEditing = !_isEditing;
+                      });
+                    },
+                  ),
+                if (widget.onDelete != null)
+                  IconButton(
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: cs.error,
+                      size: 22,
+                    ),
+                    tooltip: 'Delete task',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Task'),
+                          content: const Text('Are you sure you want to delete this task?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                widget.onDelete!();
+                                Navigator.pop(context);
+                              },
+                              child: Text('Delete', style: TextStyle(color: cs.error)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          const SizedBox(height: 8),
+          // --- Title ---
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: widget.canEdit
+                child: _isEditing
                     ? Focus(
                         onFocusChange: (hasFocus) {
                           if (!hasFocus) _updateTask();
@@ -192,7 +255,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                         ),
                       )
                     : Text(
-                        widget.task.title,
+                        _titleController.text,
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -240,7 +303,8 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
             ),
           ],
           const SizedBox(height: 12),
-          if (widget.canEdit)
+          // --- Description ---
+          if (_isEditing)
             Focus(
               onFocusChange: (hasFocus) {
                 if (!hasFocus) {
@@ -264,22 +328,23 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
             )
           else
             Text(
-              widget.task.description.isEmpty
+              _descriptionController.text.isEmpty
                   ? 'No description'
-                  : widget.task.description,
+                  : _descriptionController.text,
               style: TextStyle(
                 fontSize: 16,
                 color: cs.onSurface.withValues(alpha: 0.5),
               ),
             ),
           const SizedBox(height: 24),
+          // --- Due Date & Priority row ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Due Date
               Expanded(
                 child: InkWell(
-                  onTap: widget.canEdit ? _pickDate : null,
+                  onTap: _isEditing ? _pickDate : null,
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -314,7 +379,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                       color: _getPriorityColor(_priority),
                     ),
                     const SizedBox(width: 8),
-                    if (widget.canEdit)
+                    if (_isEditing)
                       DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _priority,
@@ -356,8 +421,8 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
               ),
             ],
           ),
-          // Assigned To section with per-person completion checkboxes
-          if (widget.canEdit && widget.members.isNotEmpty) ...[
+          // --- Assigned To section with per-person completion checkboxes ---
+          if (_isEditing && widget.members.isNotEmpty) ...[
             const SizedBox(height: 16),
             Row(
               children: [
@@ -382,7 +447,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
               ..._assignedTo.map((email) {
                 final isDone = _completedBy.contains(email);
                 final isMe = email == _currentUserEmail;
-                final canToggle = widget.canEdit || isMe;
+                final canToggle = _isEditing || isMe;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
@@ -424,7 +489,7 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
                         const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 16)
                       else
                         Icon(Icons.radio_button_unchecked, color: cs.onSurface.withValues(alpha: 0.3), size: 16),
-                      if (widget.canEdit)
+                      if (_isEditing)
                         IconButton(
                           icon: Icon(Icons.close, size: 16, color: cs.error),
                           onPressed: () {
@@ -645,31 +710,6 @@ class _TaskDetailBottomSheetState extends State<TaskDetailBottomSheet> {
               ],
             ),
             const SizedBox(height: 32),
-          ],
-          if (widget.onDelete != null) ...[
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onDelete!();
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red[50],
-                  foregroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Delete Task',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
           ],
         ],
       ),
