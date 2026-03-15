@@ -91,7 +91,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   void _onTaskAdded(
     String name,
     String description,
-    String assignedTo,
+    List<String> assignedTo,
     String dueDate,
     String priority,
   ) {
@@ -120,7 +120,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       description: description,
       dueDate: parsedDueDate,
       createdDate: DateTime.now(),
-      assignedTo: assignedTo.isNotEmpty ? assignedTo : null,
+      assignedTo: assignedTo,
       priority: priority,
     );
 
@@ -814,7 +814,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         // Viewers only see tasks assigned to them
         List<Task> visibleTasks = canEdit
             ? List.from(tasks)
-            : tasks.where((t) => t.assignedTo == userEmail).toList();
+            : tasks.where((t) => t.assignedTo.contains(userEmail)).toList();
 
         if (_taskSortOption == 'Priority') {
           final priorityWeight = {'High': 3, 'Medium': 2, 'Low': 1};
@@ -880,7 +880,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 const SizedBox(height: 40),
               ] else ...[
                 ...visibleTasks.map((task) {
-                  final isAssignedToMe = task.assignedTo == userEmail;
+                  final isAssignedToMe = task.assignedTo.contains(userEmail);
                   return GestureDetector(
                     onTap: () {
                       TaskDetailBottomSheet.show(
@@ -890,6 +890,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         canMarkComplete: canEdit || isAssignedToMe,
                         canComment:
                             true, // Viewers can comment on tasks they can see
+                        members: project.members,
                         onDelete: canEdit
                             ? () {
                                 context.read<ProjectManager>().deleteTask(
@@ -941,21 +942,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     String subtitle = task.description.isEmpty
         ? 'No description'
         : task.description;
-    String status = task.isCompleted ? 'Complete' : 'Doing';
+
+    // Progress-based status
+    String status;
     Color statusColor;
     Color statusBg;
-    switch (status) {
-      case 'Complete':
-        statusColor = const Color(0xFF2E7D32);
-        statusBg = const Color(0xFFE8F5E9);
-        break;
-      case 'Review':
-        statusColor = const Color(0xFFE65100);
-        statusBg = const Color(0xFFFFF3E0);
-        break;
-      default:
-        statusColor = const Color(0xFF1565C0);
-        statusBg = const Color(0xFFE3F2FD);
+    if (task.isCompleted) {
+      status = 'Complete';
+      statusColor = const Color(0xFF2E7D32);
+      statusBg = const Color(0xFFE8F5E9);
+    } else if (task.assignedTo.isNotEmpty && task.completedCount > 0) {
+      status = '${task.completedCount}/${task.assignedTo.length} Done';
+      statusColor = const Color(0xFFE65100);
+      statusBg = const Color(0xFFFFF3E0);
+    } else {
+      status = 'Doing';
+      statusColor = const Color(0xFF1565C0);
+      statusBg = const Color(0xFFE3F2FD);
     }
 
     Color priorityColor;
@@ -1019,7 +1022,24 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 color: cs.onSurface.withValues(alpha: 0.5),
               ),
             ),
-            const SizedBox(height: 12),
+            // Progress bar
+            if (task.assignedTo.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: task.progress,
+                  minHeight: 4,
+                  backgroundColor: cs.onSurface.withValues(alpha: 0.08),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    task.isCompleted
+                        ? const Color(0xFF4CAF50)
+                        : const Color(0xFFCFBDF6),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
             Row(
               children: [
                 Icon(
@@ -1059,19 +1079,28 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       ),
                     ),
                   ),
-                if (task.assignedTo != null && task.assignedTo!.isNotEmpty)
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: const Color(0xFFCFBDF6),
-                    child: Text(
-                      task.assignedTo![0].toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                if (task.assignedTo.isNotEmpty)
+                  ...task.assignedTo.take(3).toList().asMap().entries.map((entry) {
+                    final email = entry.value;
+                    final isDone = task.completedBy.contains(email);
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 2),
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: isDone
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFCFBDF6),
+                        child: Text(
+                          email[0].toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  )
+                    );
+                  })
                 else
                   const CircleAvatar(
                     radius: 12,

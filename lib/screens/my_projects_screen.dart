@@ -169,19 +169,14 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                     return ListView.builder(
                       padding: EdgeInsets.only(bottom: 20 * _s, top: 8 * _s),
                       itemCount: projects.length,
-                      itemBuilder: (context, index) => _buildProjectCard(projects[index]),
+                      itemBuilder: (context, index) => _buildProjectCard(projects[index], userEmail),
                     );
                   } else {
                     // --- TASKS VIEW ---
                     List<Map<String, dynamic>> myTasks = [];
                     for (var project in projects) {
                       for (var task in project.tasks) {
-                        bool isAssigned = false;
-                        if (task.assignedTo is String) {
-                          isAssigned = task.assignedTo == userEmail;
-                        } else if (task.assignedTo is List) {
-                          isAssigned = (task.assignedTo as List).contains(userEmail);
-                        }
+                        bool isAssigned = task.assignedTo.contains(userEmail);
                         
                         if (isAssigned) {
                           myTasks.add({'task': task, 'project': project});
@@ -273,7 +268,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
     );
   }
 
-  Widget _buildProjectCard(Project project) {
+  Widget _buildProjectCard(Project project, String userEmail) {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
@@ -326,7 +321,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
                   Row(
                     children: [
                       _buildStatusPill(project.status),
-                      _buildPriorityCountBadge(project),
+                      _buildPriorityCountBadge(project, userEmail),
                     ],
                   ),
                   Text(
@@ -412,17 +407,30 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
     );
   }
 
-  Widget _buildPriorityCountBadge(Project project) {
+  Widget _buildPriorityCountBadge(Project project, String userEmail) {
     List<String> prioritiesToCheck = _selectedPriority == 'All'
         ? ['High', 'Medium', 'Low']
         : [_selectedPriority];
 
     List<Widget> badges = [];
+    final bool isOwner = userEmail == project.ownerEmail;
 
     for (String priority in prioritiesToCheck) {
-      int count = project.tasks
-          .where((t) => t.priority == priority && !t.isCompleted)
-          .length;
+      int count;
+      if (isOwner) {
+        // Owner sees overall project picture
+        count = project.tasks
+            .where((t) => t.priority == priority && !t.isCompleted)
+            .length;
+      } else {
+        // Member sees only their personal assigned work
+        count = project.tasks
+            .where((t) =>
+                t.priority == priority &&
+                t.assignedTo.contains(userEmail) &&
+                !t.completedBy.contains(userEmail))
+            .length;
+      }
       
       if (count > 0) {
         Color color;
@@ -542,12 +550,7 @@ class _MyProjectsScreenState extends State<MyProjectsScreen> {
       final userEmail = FirebaseAuth.instance.currentUser?.email ?? 'guest@unitask.com';
       for (var p in allProjects) {
         for (var t in p.tasks) {
-          bool isAssigned = false;
-          if (t.assignedTo is String) {
-            isAssigned = t.assignedTo == userEmail;
-          } else if (t.assignedTo is List) {
-            isAssigned = (t.assignedTo as List).contains(userEmail);
-          }
+          bool isAssigned = t.assignedTo.contains(userEmail);
 
           if (isAssigned) {
             total++;
