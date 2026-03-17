@@ -281,17 +281,18 @@ class NotificationService {
         return;
       }
 
-      final payload = {
-        'message': {
-          'token': targetFcmToken,
-          'notification': {'title': title, 'body': body},
-          'android': {
-            'priority': 'high',
-            'notification': {'sound': 'default'},
-          },
-          'data': ?data,
+      final Map<String, dynamic> message = {
+        'token': targetFcmToken,
+        'notification': {'title': title, 'body': body},
+        'android': {
+          'priority': 'high',
+          'notification': {'sound': 'default'},
         },
       };
+      if (data != null) {
+        message['data'] = data;
+      }
+      final payload = {'message': message};
 
       final response = await http.post(
         Uri.parse(_fcmV1Endpoint),

@@ -1,17 +1,28 @@
-# unitask_flutter
+# 🎯 UniTask - Flutter
 
-A new Flutter project.
+Unitask is a collaborative task management application built with Flutter and Firebase.
 
-## Getting Started
+## 📱 Download Application
+**You can download the latest Android app (APK) here:**
+### [📥 Download UniTask.apk](https://github.com/lillianxhub/Unitask-flutter/releases/latest)
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 🚀 Features
+- **Smart Progress Tracking**: Tasks are only completed when everyone assigned marks them as done.
+- **Smart Priority Badges**: See overall project workload or your personal tasks at a glance.
+- **Real-time Notifications**: Get notified on role changes, invites, and task updates.
+- **Smart UI**: Read-only task viewing with quick edit/delete access for owners.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## 🛠️ Tech Stack
+- **Framework**: Flutter
+- **Backend**: Firebase (Firestore, Auth, Cloud Messaging)
+- **State Management**: Provider
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 👨‍💻 Getting Started
+1. Clone the repository
+2. Run `flutter pub get`
+3. Set up your Firebase project and add `google-services.json`
+4. Run `flutter run`
