@@ -360,6 +360,13 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                           project.name,
                           comment,
                         );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Comment added'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
                         _commentController.clear();
                         FocusScope.of(context).unfocus();
                       }

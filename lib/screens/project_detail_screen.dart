@@ -125,6 +125,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
 
     context.read<ProjectManager>().addTask(projectName, newTask);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Task added and notification sent'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -538,6 +545,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                             timestamp: DateTime.now(),
                           );
                           projectManager.addComment(project.name, comment);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Comment added'),
+                              backgroundColor: Colors.green,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                           _commentController.clear();
                           FocusScope.of(context).unfocus();
                         }
@@ -1154,12 +1168,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           context,
                           onInvite: (email, role) {
                             if (email != null && email.isNotEmpty) {
-                              context.read<ProjectManager>().inviteMember(
-                                projectName,
-                                email,
-                                role,
-                              );
-                            }
+                                context.read<ProjectManager>().inviteMember(
+                                  projectName,
+                                  email,
+                                  role,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Invitation sent to $email'),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                           },
                         );
                       },
@@ -1217,6 +1238,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                             projectName,
                             email,
                             newRole,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Role updated for $email to $newRole'),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 2),
+                            ),
                           );
                         },
                         onRemove:
@@ -1333,6 +1361,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           TextButton(
             onPressed: () {
               context.read<ProjectManager>().removeMember(projectName, email);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Member $email removed'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
               Navigator.pop(ctx);
             },
             child: const Text('Remove', style: TextStyle(color: Colors.red)),

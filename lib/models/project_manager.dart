@@ -541,35 +541,36 @@ class ProjectManager extends ChangeNotifier {
           'notifications',
         );
 
-        for (final memberEmail in project.members) {
-          if (memberEmail != comment.authorEmail) {
-            final docRef = notificationsRef.doc();
-            batch.set(docRef, {
-              'id': docRef.id,
-              'recipientEmail': memberEmail,
-              'projectId': project.id,
-              'projectName': project.name,
-              'senderName': comment.authorName,
-              'senderEmail': comment.authorEmail,
-              'type': 'comment',
-              'text': '[Task: ${task.title}] ${comment.text}',
-              'timestamp': FieldValue.serverTimestamp(),
-              'isRead': false,
-            });
-          }
+        // Determine relevant people for task comment: Project Owner + Task Assignees
+        final Set<String> relevantEmails = {project.ownerEmail, ...task.assignedTo};
+        relevantEmails.remove(comment.authorEmail);
+        relevantEmails.removeWhere((email) => email.isEmpty);
+
+        for (final memberEmail in relevantEmails) {
+          final docRef = notificationsRef.doc();
+          batch.set(docRef, {
+            'id': docRef.id,
+            'recipientEmail': memberEmail,
+            'projectId': project.id,
+            'projectName': project.name,
+            'senderName': comment.authorName,
+            'senderEmail': comment.authorEmail,
+            'type': 'comment',
+            'text': '[Task: ${task.title}] ${comment.text}',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
         }
         await batch.commit();
 
-        // Send push to all members about the task comment
-        for (final memberEmail in project.members) {
-          if (memberEmail != comment.authorEmail) {
-            _sendPushToUserByEmail(
-              recipientEmail: memberEmail,
-              title: '💬 ความคิดเห็นใหม่',
-              body: '${comment.authorName} แสดงความคิดเห็นในงาน "${task.title}" ของโปรเจค "${project.name}"',
-              data: {'type': 'task_comment', 'projectId': project.id ?? ''},
-            );
-          }
+        // Send push to relevant members about the task comment
+        for (final memberEmail in relevantEmails) {
+          _sendPushToUserByEmail(
+            recipientEmail: memberEmail,
+            title: '💬 ความคิดเห็นใหม่',
+            body: '${comment.authorName} แสดงความคิดเห็นในงาน "${task.title}" ของโปรเจค "${project.name}"',
+            data: {'type': 'task_comment', 'projectId': project.id ?? ''},
+          );
         }
 
         notifyListeners();
@@ -607,35 +608,36 @@ class ProjectManager extends ChangeNotifier {
           'notifications',
         );
 
-        for (final memberEmail in project.members) {
-          if (memberEmail != comment.authorEmail) {
-            final docRef = notificationsRef.doc();
-            batch.set(docRef, {
-              'id': docRef.id,
-              'recipientEmail': memberEmail,
-              'projectId': project.id,
-              'projectName': project.name,
-              'senderName': comment.authorName,
-              'senderEmail': comment.authorEmail,
-              'type': 'comment',
-              'text': comment.text,
-              'timestamp': FieldValue.serverTimestamp(),
-              'isRead': false,
-            });
-          }
+        // Determine relevant people for project comment: Project Owner
+        final Set<String> relevantEmails = {project.ownerEmail};
+        relevantEmails.remove(comment.authorEmail);
+        relevantEmails.removeWhere((email) => email.isEmpty);
+
+        for (final memberEmail in relevantEmails) {
+          final docRef = notificationsRef.doc();
+          batch.set(docRef, {
+            'id': docRef.id,
+            'recipientEmail': memberEmail,
+            'projectId': project.id,
+            'projectName': project.name,
+            'senderName': comment.authorName,
+            'senderEmail': comment.authorEmail,
+            'type': 'comment',
+            'text': comment.text,
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+          });
         }
         await batch.commit();
 
-        // Send push to all members about the project comment
-        for (final memberEmail in project.members) {
-          if (memberEmail != comment.authorEmail) {
-            _sendPushToUserByEmail(
-              recipientEmail: memberEmail,
-              title: '💬 ความคิดเห็นใหม่',
-              body: '${comment.authorName} แสดงความคิดเห็นในโปรเจค "${project.name}"',
-              data: {'type': 'project_comment', 'projectId': project.id ?? ''},
-            );
-          }
+        // Send push to relevant members about the project comment
+        for (final memberEmail in relevantEmails) {
+          _sendPushToUserByEmail(
+            recipientEmail: memberEmail,
+            title: '💬 ความคิดเห็นใหม่',
+            body: '${comment.authorName} แสดงความคิดเห็นในโปรเจค "${project.name}"',
+            data: {'type': 'project_comment', 'projectId': project.id ?? ''},
+          );
         }
 
         notifyListeners();

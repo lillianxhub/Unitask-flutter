@@ -286,7 +286,10 @@ class NotificationService {
         'notification': {'title': title, 'body': body},
         'android': {
           'priority': 'high',
-          'notification': {'sound': 'default'},
+          'notification': {
+            'sound': 'default',
+            'channel_id': 'high_importance_channel',
+          },
         },
       };
       if (data != null) {
