@@ -60,3 +60,5 @@ unitask-app-*.json
 firebase.json
 pubspec.lock
 !.env.example
+
+document.docx
