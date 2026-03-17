@@ -47,11 +47,15 @@ app.*.map.json
 # Sensitive / Secret files
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+**/google-services.json
+**/GoogleService-Info.plist
 lib/firebase_options.dart
 assets/service_account.json
 unitask-app-*.json
+*-service-account*.json
 *.p12
 *.keystore
+*.jks
 .env
 .env.*
 !.env.example
