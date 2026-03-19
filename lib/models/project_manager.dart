@@ -101,7 +101,6 @@ class ProjectManager extends ChangeNotifier {
     FirebaseFirestore.instance
         .collection('notifications')
         .where('recipientEmail', isEqualTo: userEmail)
-        .orderBy('timestamp', descending: true)
         .snapshots()
         .listen(
           (snapshot) {
@@ -113,6 +112,8 @@ class ProjectManager extends ChangeNotifier {
             _notifications = snapshot.docs.map((doc) {
               return AppNotification.fromJson(doc.data(), doc.id);
             }).toList();
+            // Sort in memory instead of Firestore query to avoid composite index requirement
+            _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
             notifyListeners();
           },
           onError: (error) {

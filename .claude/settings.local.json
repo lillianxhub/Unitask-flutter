@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(flutter analyze)"
+      "Bash(flutter analyze)",
+      "Bash(find '/c/Users/Lenovo/Desktop/My Project/Unitask-flutter/ios' -name *GoogleService* -o -name *.plist)"
     ]
   }
 }
